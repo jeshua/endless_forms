@@ -2,10 +2,8 @@
  * API client for the Shape Splitting Workbench backend.
  */
 
-// Use environment-based API URL: production backend or localhost for dev
-const API_BASE = window.location.hostname === 'localhost'
-    ? 'http://localhost:8000'
-    : 'https://endless-forms-backend.onrender.com';
+// Use relative /api/ routes for Vercel serverless functions
+const API_BASE = '/api';
 
 export const API = {
     /**
@@ -25,7 +23,7 @@ export const API = {
      * @returns {Promise<Object>} Generated mesh data
      */
     async generateShape(type, params = {}) {
-        const response = await fetch(`${API_BASE}/shapes/generate`, {
+        const response = await fetch(`${API_BASE}/generate`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ shape_type: type, params }),
@@ -52,18 +50,18 @@ export const API = {
      * @param {string} strategy - Splitting algorithm name
      * @param {number} numParts - Number of parts to split into
      * @param {Object} params - Algorithm-specific parameters
-     * @param {string|null} meshData - Base64 encoded mesh data (optional)
+     * @param {string} shapeType - Current shape type (for serverless regeneration)
+     * @param {Object} shapeParams - Current shape params (for serverless regeneration)
      * @returns {Promise<Object>} Split mesh data
      */
-    async splitMesh(strategy, numParts, params = {}, meshData = null) {
+    async splitMesh(strategy, numParts, params = {}, shapeType = 'diamond', shapeParams = {}) {
         const body = {
             strategy,
             num_parts: numParts,
             params,
+            shape_type: shapeType,
+            shape_params: shapeParams,
         };
-        if (meshData) {
-            body.mesh_data = meshData;
-        }
 
         const response = await fetch(`${API_BASE}/split`, {
             method: 'POST',

@@ -1,0 +1,26 @@
+{
+  "builds": [
+    {
+      "src": "api/*.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/shapes",
+      "dest": "/api/shapes.py"
+    },
+    {
+      "src": "/api/generate",
+      "dest": "/api/generate.py"
+    },
+    {
+      "src": "/api/splitters",
+      "dest": "/api/splitters.py"
+    },
+    {
+      "src": "/api/split",
+      "dest": "/api/split.py"
+    }
+  ]
+}

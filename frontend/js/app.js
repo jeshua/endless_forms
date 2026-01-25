@@ -293,12 +293,14 @@ class App {
         const strategy = this.splitterSelect.value;
         const numParts = parseInt(this.numPartsInput.value);
         const params = this.getSplitterParams();
+        const shapeType = this.shapeSelect.value;
+        const shapeParams = this.getShapeParams();
 
         this.setStatus(`Splitting with ${strategy}...`, 'loading');
         this.setLoading(true);
 
         try {
-            const response = await API.splitMesh(strategy, numParts, params);
+            const response = await API.splitMesh(strategy, numParts, params, shapeType, shapeParams);
             this.viewer.loadMesh(response.mesh);
             this.updateExportParts();
             this.setStatus(`Split into ${response.num_parts} parts`, 'success');
