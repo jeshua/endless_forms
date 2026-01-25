@@ -1,0 +1,11 @@
+.vercel
+.env
+.env*.local
+node_modules/
+backend/venv/
+__pycache__/
+*.pyc
+.DS_Store
+.playwright-mcp/
+test-results/
+*.md~

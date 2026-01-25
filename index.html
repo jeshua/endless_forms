@@ -1,0 +1,3563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Shards</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'SF Mono', 'Monaco', monospace;
+            background: #080808;
+            color: #ddd;
+            overflow: hidden;
+        }
+        #container { display: flex; height: 100vh; }
+        #canvas-container { flex: 1; position: relative; background: #0c0c0c; }
+        #controls {
+            width: 220px;
+            background: #080808;
+            padding: 14px;
+            overflow-y: auto;
+            border-left: 1px solid #181818;
+        }
+        h1 {
+            font-size: 10px;
+            font-weight: 400;
+            margin-bottom: 18px;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-align: center;
+        }
+        h2 {
+            font-size: 8px;
+            font-weight: 400;
+            margin: 16px 0 6px;
+            color: #444;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        input[type="range"] {
+            width: 100%;
+            height: 2px;
+            -webkit-appearance: none;
+            background: #222;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 10px;
+            height: 10px;
+            background: #fff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .val { font-size: 9px; color: #555; text-align: right; margin-top: 2px; }
+        button {
+            padding: 5px 8px;
+            border: 1px solid #222;
+            border-radius: 2px;
+            cursor: pointer;
+            font-size: 8px;
+            font-family: inherit;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: #0f0f0f;
+            color: #555;
+        }
+        button:hover { background: #181818; color: #fff; }
+        .on { background: #fff !important; color: #000 !important; }
+        .exp { color: #494; }
+        .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+        .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3px; }
+        .div { height: 1px; background: #181818; margin: 12px 0; }
+        .col { display: flex; flex-direction: column; gap: 3px; }
+        select {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #222;
+            border-radius: 2px;
+            background: #0f0f0f;
+            color: #888;
+            font-size: 9px;
+            font-family: inherit;
+            cursor: pointer;
+        }
+        select:hover { background: #181818; color: #fff; }
+
+        /* Gallery styles */
+        #gallery {
+            display: none;
+            height: 100vh;
+            overflow-y: auto;
+            padding: 20px;
+            background: #080808;
+        }
+        #gallery.active { display: block; }
+        #container.hidden { display: none; }
+        .gallery-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .gallery-header h1 {
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .gallery-item {
+            background: #0c0c0c;
+            border: 1px solid #181818;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: border-color 0.2s, transform 0.2s;
+            overflow: hidden;
+        }
+        .gallery-item:hover {
+            border-color: #444;
+            transform: scale(1.02);
+        }
+        .gallery-item canvas {
+            width: 100%;
+            height: 140px;
+            display: block;
+        }
+        .gallery-item-label {
+            padding: 8px;
+            font-size: 9px;
+            color: #888;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-top: 1px solid #181818;
+        }
+        .back-btn {
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Gallery View -->
+    <div id="gallery" class="active">
+        <div class="gallery-header">
+            <h1>Form Shards</h1>
+            <p style="font-size: 9px; color: #555;">Select a design to edit</p>
+            <a href="frontend/index.html" style="display: inline-block; margin-top: 12px; padding: 8px 16px; background: #0af; color: #000; text-decoration: none; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; border-radius: 2px;">Shape Explosion Tool</a>
+        </div>
+        <div class="gallery-grid" id="galleryGrid">
+            <!-- Populated by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Editor View -->
+    <div id="container" class="hidden">
+        <div id="canvas-container"></div>
+        <div id="controls">
+            <h1>Form Shards</h1>
+
+            <button class="back-btn" onclick="showGallery()">Back to Gallery</button>
+
+            <h2>Design</h2>
+            <select id="designSelect" onchange="setDesign(this.value)">
+                <!-- Options populated by JavaScript -->
+            </select>
+
+            <h2>Size</h2>
+            <input type="range" id="size" min="30" max="70" value="50">
+            <div class="val" id="sizeV">50</div>
+
+            <h2>Height</h2>
+            <input type="range" id="height" min="5" max="25" value="12">
+            <div class="val" id="heightV">12</div>
+
+            <div class="div"></div>
+
+            <h2>View</h2>
+            <div class="g2">
+                <button id="vMerge" class="on" onclick="setView('merge')">Merged</button>
+                <button id="vApart" onclick="setView('apart')">Apart</button>
+            </div>
+            <div class="g2" style="margin-top:3px">
+                <button onclick="cam('top')" class="on" id="camTop">Above</button>
+                <button onclick="cam('front')" id="camFront">Front</button>
+            </div>
+
+            <div class="div"></div>
+
+            <h2>Shards</h2>
+            <div id="shardBtns" class="g3">
+                <button id="t0" class="on" onclick="tog(0)">A</button>
+                <button id="t1" class="on" onclick="tog(1)">B</button>
+                <button id="t2" class="on" onclick="tog(2)">C</button>
+            </div>
+
+            <div class="div"></div>
+
+            <h2>Export</h2>
+            <div class="col">
+                <button class="exp" onclick="exp('all')">All</button>
+                <button class="exp" onclick="exp(0)">Shard A</button>
+                <button class="exp" onclick="exp(1)">Shard B</button>
+                <button class="exp" onclick="exp(2)">Shard C</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { STLExporter } from 'three/addons/exporters/STLExporter.js';
+
+        let scene, camera, renderer, controls;
+        let shards = [];
+        let vis = [true, true, true];
+        let view = 'merge';
+        let shape = 'tri';
+        let triStyle = 'classic';
+        let pentStyle = 'classic';
+        let hexStyle = 'classic';
+        let animT = 0;
+        let size = 50;
+        let height = 12;
+
+        // All available designs (shape + style combinations)
+        const allDesigns = [
+            // Triangle variations
+            { value: 'tri:classic', label: 'Triangle - Classic Thirds' },
+            { value: 'tri:offset', label: 'Triangle - Offset Center' },
+            { value: 'tri:layers', label: 'Triangle - Horizontal Layers' },
+            { value: 'tri:corners', label: 'Triangle - Corner Huggers' },
+            { value: 'tri:unequal', label: 'Triangle - Unequal Thirds' },
+            // Triangle Slot variations (with interlocking edges)
+            { value: 'triProg:classic-wave', label: 'Tri-Slot - Classic Wave' },
+            { value: 'triProg:classic-scallop', label: 'Tri-Slot - Classic Scallop' },
+            { value: 'triProg:layers-wave', label: 'Tri-Slot - Layers Wave' },
+            { value: 'triProg:spiral-wave', label: 'Tri-Slot - Spiral Wave' },
+            { value: 'triProg:spiral-scallop', label: 'Tri-Slot - Spiral Scallop' },
+            { value: 'triProg:pinwheel-wave', label: 'Tri-Slot - Pinwheel Wave' },
+            { value: 'triProg:pinwheel-scallop', label: 'Tri-Slot - Pinwheel Scallop' },
+            { value: 'triProg:nested-wave', label: 'Tri-Slot - Nested' },
+            // Triangle Hub (4 pieces with central hub)
+            { value: 'triHub:wave', label: 'Tri-Hub - Wave' },
+            { value: 'triHub:scallop', label: 'Tri-Hub - Scallop' },
+            { value: 'triHub:zigzag', label: 'Tri-Hub - Zigzag' },
+            // Pentagon variations
+            { value: 'pent:classic', label: 'Pentagon - Classic' },
+            { value: 'pent:offset', label: 'Pentagon - Offset' },
+            { value: 'pent:corners', label: 'Pentagon - Corners' },
+            // Pentagon Slot variations
+            { value: 'pentProg:wave', label: 'Pent-Slot - Wave' },
+            { value: 'pentProg:zigzag', label: 'Pent-Slot - Zigzag' },
+            // Hexagon variations
+            { value: 'hex:classic', label: 'Hexagon - Classic' },
+            { value: 'hex:offset', label: 'Hexagon - Offset' },
+            { value: 'hex:corners', label: 'Hexagon - Corners' },
+            { value: 'hex:unequal', label: 'Hexagon - Unequal' },
+            // Hexagon Slot variations
+            { value: 'hexProg:scallop', label: 'Hex-Slot - Scallop' },
+            { value: 'hexProg:zigzag', label: 'Hex-Slot - Zigzag' },
+            // Mixed piece shapes (each robot is different)
+            { value: 'kite:zigzag', label: 'Kite - Classic' },
+            { value: 'diamond:zigzag', label: 'Diamond' },
+            { value: 'arrow:zigzag', label: 'Arrow' },
+            { value: 'hourglass:zigzag', label: 'Hourglass' },
+            // Kite variations - different geometric breakdowns
+            { value: 'kite2:zigzag', label: 'Kite - Radial' },
+            { value: 'kite3:zigzag', label: 'Kite - Asymmetric' },
+            { value: 'kite4:zigzag', label: 'Kite - Pinwheel' },
+            { value: 'kite5:zigzag', label: 'Kite - Bands' },
+            { value: 'kite6:zigzag', label: 'Kite - Frame' }
+        ];
+
+        let currentDesign = 'tri:classic';
+        let triProgStyle = 'classic-wave';
+        let triHubStyle = 'wave';
+        let pentProgStyle = 'wave';
+        let hexProgStyle = 'wave';
+        let kiteStyle = 'zigzag';
+        let diamondStyle = 'zigzag';
+        let arrowStyle = 'zigzag';
+        let hourglassStyle = 'zigzag';
+        let kite2Style = 'zigzag';
+        let kite3Style = 'zigzag';
+        let kite4Style = 'zigzag';
+        let kite5Style = 'zigzag';
+        let kite6Style = 'zigzag';
+
+        // Distinct colors - light to dark (5 for pentagon, 3 for others, 4 for hub shapes)
+        const cols3 = [0xe0e0e0, 0x909090, 0x505050];
+        const cols4 = [0xe0e0e0, 0xa0a0a0, 0x606060, 0x303030]; // 3 corners + hub (darkest)
+        const cols5 = [0xf0f0f0, 0xc0c0c0, 0x909090, 0x606060, 0x404040];
+
+        init();
+        animate();
+
+        function init() {
+            const box = document.getElementById('canvas-container');
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0c0c0c);
+
+            camera = new THREE.OrthographicCamera(-80, 80, 80, -80, 1, 500);
+            camera.position.set(0, 100, 0);
+            camera.lookAt(0, 0, 0);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(box.clientWidth, box.clientHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            box.appendChild(renderer.domElement);
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.enableRotate = true;
+
+            // Simple lighting
+            scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+            const sun = new THREE.DirectionalLight(0xffffff, 0.5);
+            sun.position.set(30, 50, 30);
+            scene.add(sun);
+
+            // Subtle ground
+            const ground = new THREE.Mesh(
+                new THREE.PlaneGeometry(300, 300),
+                new THREE.MeshBasicMaterial({ color: 0x0a0a0a })
+            );
+            ground.rotation.x = -Math.PI / 2;
+            ground.position.y = -0.5;
+            scene.add(ground);
+
+            populateDesignDropdown();
+            build();
+
+            document.getElementById('size').oninput = e => {
+                size = +e.target.value;
+                document.getElementById('sizeV').textContent = size;
+                build();
+            };
+            document.getElementById('height').oninput = e => {
+                height = +e.target.value;
+                document.getElementById('heightV').textContent = height;
+                build();
+            };
+
+            window.addEventListener('resize', () => {
+                const w = box.clientWidth, h = box.clientHeight;
+                const aspect = w / h;
+                camera.left = -80 * aspect;
+                camera.right = 80 * aspect;
+                camera.updateProjectionMatrix();
+                renderer.setSize(w, h);
+            });
+            window.dispatchEvent(new Event('resize'));
+        }
+
+        // Gallery rendering
+        function initGallery() {
+            const grid = document.getElementById('galleryGrid');
+            grid.innerHTML = '';
+
+            allDesigns.forEach((design, idx) => {
+                const item = document.createElement('div');
+                item.className = 'gallery-item';
+                item.onclick = () => selectFromGallery(design.value);
+
+                const canvas = document.createElement('canvas');
+                canvas.width = 200;
+                canvas.height = 160;
+                canvas.id = `preview-${idx}`;
+
+                const label = document.createElement('div');
+                label.className = 'gallery-item-label';
+                label.textContent = design.label;
+
+                item.appendChild(canvas);
+                item.appendChild(label);
+                grid.appendChild(item);
+            });
+
+            // Render previews progressively
+            renderGalleryPreviews();
+        }
+
+        function renderGalleryPreviews() {
+            const previewSize = 45;
+            const previewHeight = 10;
+
+            // Create ONE shared offscreen canvas and renderer
+            const offscreenCanvas = document.createElement('canvas');
+            offscreenCanvas.width = 200;
+            offscreenCanvas.height = 160;
+
+            const sharedRenderer = new THREE.WebGLRenderer({
+                canvas: offscreenCanvas,
+                antialias: true,
+                preserveDrawingBuffer: true
+            });
+            sharedRenderer.setSize(200, 160);
+
+            const aspect = 200 / 160;
+            const previewCam = new THREE.OrthographicCamera(
+                -50 * aspect, 50 * aspect, 50, -50, 1, 500
+            );
+            previewCam.position.set(0, 100, 0);
+            previewCam.lookAt(0, 0, 0);
+
+            allDesigns.forEach((design, idx) => {
+                const targetCanvas = document.getElementById(`preview-${idx}`);
+                if (!targetCanvas) return;
+
+                // Create fresh scene for this preview
+                const previewScene = new THREE.Scene();
+                previewScene.background = new THREE.Color(0x0c0c0c);
+
+                previewScene.add(new THREE.AmbientLight(0xffffff, 0.7));
+                const sun = new THREE.DirectionalLight(0xffffff, 0.5);
+                sun.position.set(30, 50, 30);
+                previewScene.add(sun);
+
+                // Parse design and build shapes
+                const [shapeType, styleType] = design.value.split(':');
+
+                // Temporarily set globals for the build functions
+                const oldShape = shape;
+                const oldSize = size;
+                const oldHeight = height;
+                shape = shapeType;
+                size = previewSize;
+                height = previewHeight;
+
+                // Set the style
+                if (shapeType === 'tri') triStyle = styleType;
+                else if (shapeType === 'triProg') triProgStyle = styleType;
+                else if (shapeType === 'triHub') triHubStyle = styleType;
+                else if (shapeType === 'pent') pentStyle = styleType;
+                else if (shapeType === 'pentProg') pentProgStyle = styleType;
+                else if (shapeType === 'hex') hexStyle = styleType;
+                else if (shapeType === 'hexProg') hexProgStyle = styleType;
+                else if (shapeType === 'kite') kiteStyle = styleType;
+                else if (shapeType === 'diamond') diamondStyle = styleType;
+                else if (shapeType === 'arrow') arrowStyle = styleType;
+                else if (shapeType === 'hourglass') hourglassStyle = styleType;
+                else if (shapeType === 'kite2') kite2Style = styleType;
+                else if (shapeType === 'kite3') kite3Style = styleType;
+                else if (shapeType === 'kite4') kite4Style = styleType;
+                else if (shapeType === 'kite5') kite5Style = styleType;
+                else if (shapeType === 'kite6') kite6Style = styleType;
+
+                // Build shapes directly into preview scene
+                buildForPreview(previewScene, shapeType);
+
+                // Restore globals
+                shape = oldShape;
+                size = oldSize;
+                height = oldHeight;
+
+                // Render to shared canvas
+                sharedRenderer.render(previewScene, previewCam);
+
+                // Copy to target canvas
+                const ctx = targetCanvas.getContext('2d');
+                ctx.drawImage(offscreenCanvas, 0, 0);
+
+                // Dispose scene objects to free memory
+                previewScene.traverse(obj => {
+                    if (obj.geometry) obj.geometry.dispose();
+                    if (obj.material) obj.material.dispose();
+                });
+            });
+
+            // Dispose the shared renderer when done
+            sharedRenderer.dispose();
+        }
+
+        function buildForPreview(targetScene, shapeType) {
+            const S = size;
+            const previewShards = [];
+
+            if (shapeType === 'triProg') {
+                buildTriProgForScene(targetScene);
+            } else if (shapeType === 'triHub') {
+                buildTriHubForScene(targetScene);
+            } else if (shapeType === 'pentProg') {
+                buildPentProgForScene(targetScene);
+            } else if (shapeType === 'hexProg') {
+                buildHexProgForScene(targetScene);
+            } else if (shapeType === 'kite') {
+                buildKiteForScene(targetScene);
+            } else if (shapeType === 'diamond') {
+                buildDiamondForScene(targetScene);
+            } else if (shapeType === 'arrow') {
+                buildArrowForScene(targetScene);
+            } else if (shapeType === 'hourglass') {
+                buildHourglassForScene(targetScene);
+            } else if (shapeType === 'kite2') {
+                buildKite2ForScene(targetScene);
+            } else if (shapeType === 'kite3') {
+                buildKite3ForScene(targetScene);
+            } else if (shapeType === 'kite4') {
+                buildKite4ForScene(targetScene);
+            } else if (shapeType === 'kite5') {
+                buildKite5ForScene(targetScene);
+            } else if (shapeType === 'kite6') {
+                buildKite6ForScene(targetScene);
+            } else {
+                // Simple shapes (tri, pent, hex)
+                const numShards = 3;
+                const cols = cols3;
+
+                for (let i = 0; i < numShards; i++) {
+                    let shape2d;
+                    if (shapeType === 'tri') shape2d = triShape(i);
+                    else if (shapeType === 'pent') shape2d = pentShape(i);
+                    else shape2d = hexShape(i);
+
+                    const geo = new THREE.ExtrudeGeometry(shape2d, {
+                        depth: height,
+                        bevelEnabled: true,
+                        bevelThickness: 1,
+                        bevelSize: 0.5,
+                        bevelSegments: 2
+                    });
+
+                    const mat = new THREE.MeshStandardMaterial({
+                        color: cols[i],
+                        roughness: 0.6,
+                        metalness: 0.05
+                    });
+
+                    const mesh = new THREE.Mesh(geo, mat);
+                    mesh.rotation.x = -Math.PI / 2;
+
+                    const g = new THREE.Group();
+                    g.add(mesh);
+                    g.position.y = i * 1.5;
+
+                    targetScene.add(g);
+                    previewShards.push(g);
+                }
+            }
+
+            return previewShards;
+        }
+
+        // Simplified build functions for preview (add to target scene instead of main scene)
+        function buildTriProgForScene(targetScene) {
+            const oldShards = shards;
+            const oldScene = scene;
+            shards = [];
+            scene = targetScene;
+            buildTriProg();
+            scene = oldScene;
+            shards = oldShards;
+        }
+
+        function buildTriHubForScene(targetScene) {
+            const oldShards = shards;
+            const oldScene = scene;
+            shards = [];
+            scene = targetScene;
+            buildTriHub();
+            scene = oldScene;
+            shards = oldShards;
+        }
+
+        function buildPentProgForScene(targetScene) {
+            const oldShards = shards;
+            const oldScene = scene;
+            shards = [];
+            scene = targetScene;
+            buildPentProg();
+            scene = oldScene;
+            shards = oldShards;
+        }
+
+        function buildHexProgForScene(targetScene) {
+            const oldShards = shards;
+            const oldScene = scene;
+            shards = [];
+            scene = targetScene;
+            buildHexProg();
+            scene = oldScene;
+            shards = oldShards;
+        }
+
+        function buildKiteForScene(targetScene) {
+            const oldShards = shards;
+            const oldScene = scene;
+            shards = [];
+            scene = targetScene;
+            buildKite();
+            scene = oldScene;
+            shards = oldShards;
+        }
+
+        function buildDiamondForScene(targetScene) {
+            const oldShards = shards;
+            const oldScene = scene;
+            shards = [];
+            scene = targetScene;
+            buildDiamond();
+            scene = oldScene;
+            shards = oldShards;
+        }
+
+        function buildArrowForScene(targetScene) {
+            const oldShards = shards;
+            const oldScene = scene;
+            shards = [];
+            scene = targetScene;
+            buildArrow();
+            scene = oldScene;
+            shards = oldShards;
+        }
+
+        function buildHourglassForScene(targetScene) {
+            const oldShards = shards;
+            const oldScene = scene;
+            shards = [];
+            scene = targetScene;
+            buildHourglass();
+            scene = oldScene;
+            shards = oldShards;
+        }
+
+        function buildKite2ForScene(targetScene) {
+            const oldShards = shards;
+            const oldScene = scene;
+            shards = [];
+            scene = targetScene;
+            buildKite2();
+            scene = oldScene;
+            shards = oldShards;
+        }
+
+        function buildKite3ForScene(targetScene) {
+            const oldShards = shards;
+            const oldScene = scene;
+            shards = [];
+            scene = targetScene;
+            buildKite3();
+            scene = oldScene;
+            shards = oldShards;
+        }
+
+        function buildKite4ForScene(targetScene) {
+            const oldShards = shards;
+            const oldScene = scene;
+            shards = [];
+            scene = targetScene;
+            buildKite4();
+            scene = oldScene;
+            shards = oldShards;
+        }
+
+        function buildKite5ForScene(targetScene) {
+            const oldShards = shards;
+            const oldScene = scene;
+            shards = [];
+            scene = targetScene;
+            buildKite5();
+            scene = oldScene;
+            shards = oldShards;
+        }
+
+        function buildKite6ForScene(targetScene) {
+            const oldShards = shards;
+            const oldScene = scene;
+            shards = [];
+            scene = targetScene;
+            buildKite6();
+            scene = oldScene;
+            shards = oldShards;
+        }
+
+        function selectFromGallery(designValue) {
+            currentDesign = designValue;
+            const [newShape, newStyle] = designValue.split(':');
+            shape = newShape;
+
+            if (newShape === 'tri') triStyle = newStyle;
+            else if (newShape === 'triProg') triProgStyle = newStyle;
+            else if (newShape === 'triHub') triHubStyle = newStyle;
+            else if (newShape === 'pent') pentStyle = newStyle;
+            else if (newShape === 'pentProg') pentProgStyle = newStyle;
+            else if (newShape === 'hex') hexStyle = newStyle;
+            else if (newShape === 'hexProg') hexProgStyle = newStyle;
+            else if (newShape === 'kite') kiteStyle = newStyle;
+            else if (newShape === 'diamond') diamondStyle = newStyle;
+            else if (newShape === 'arrow') arrowStyle = newStyle;
+            else if (newShape === 'hourglass') hourglassStyle = newStyle;
+            else if (newShape === 'kite2') kite2Style = newStyle;
+            else if (newShape === 'kite3') kite3Style = newStyle;
+            else if (newShape === 'kite4') kite4Style = newStyle;
+            else if (newShape === 'kite5') kite5Style = newStyle;
+            else if (newShape === 'kite6') kite6Style = newStyle;
+
+            showEditor();
+        }
+
+        window.showGallery = () => {
+            document.getElementById('gallery').classList.add('active');
+            document.getElementById('container').classList.add('hidden');
+        };
+
+        function showEditor() {
+            document.getElementById('gallery').classList.remove('active');
+            document.getElementById('container').classList.remove('hidden');
+            populateDesignDropdown();
+            document.getElementById('designSelect').value = currentDesign;
+            build();
+            window.dispatchEvent(new Event('resize'));
+        }
+
+        // Initialize gallery on load
+        setTimeout(initGallery, 100);
+
+        function build() {
+            shards.forEach(s => scene.remove(s.g));
+            shards = [];
+
+            const numShards = 3; // Always 3 robots
+            const cols = cols3;
+            vis = new Array(numShards).fill(true);
+
+            // Special handling for programmatic slotted shapes
+            if (shape === 'triProg') {
+                buildTriProg();
+                updatePos();
+                updateShardButtons();
+                return;
+            }
+            if (shape === 'triHub') {
+                buildTriHub();
+                updatePos();
+                updateShardButtons();
+                return;
+            }
+            if (shape === 'pentProg') {
+                buildPentProg();
+                updatePos();
+                updateShardButtons();
+                return;
+            }
+            if (shape === 'hexProg') {
+                buildHexProg();
+                updatePos();
+                updateShardButtons();
+                return;
+            }
+            if (shape === 'kite') {
+                buildKite();
+                updatePos();
+                updateShardButtons();
+                return;
+            }
+            if (shape === 'diamond') {
+                buildDiamond();
+                updatePos();
+                updateShardButtons();
+                return;
+            }
+            if (shape === 'arrow') {
+                buildArrow();
+                updatePos();
+                updateShardButtons();
+                return;
+            }
+            if (shape === 'hourglass') {
+                buildHourglass();
+                updatePos();
+                updateShardButtons();
+                return;
+            }
+            if (shape === 'kite2') {
+                buildKite2();
+                updatePos();
+                updateShardButtons();
+                return;
+            }
+            if (shape === 'kite3') {
+                buildKite3();
+                updatePos();
+                updateShardButtons();
+                return;
+            }
+            if (shape === 'kite4') {
+                buildKite4();
+                updatePos();
+                updateShardButtons();
+                return;
+            }
+            if (shape === 'kite5') {
+                buildKite5();
+                updatePos();
+                updateShardButtons();
+                return;
+            }
+            if (shape === 'kite6') {
+                buildKite6();
+                updatePos();
+                updateShardButtons();
+                return;
+            }
+
+            for (let i = 0; i < numShards; i++) {
+                const g = new THREE.Group();
+
+                // Create 2D shape for this shard (uses style-specific functions)
+                let shape2d;
+                if (shape === 'tri') shape2d = triShape(i);
+                else if (shape === 'pent') shape2d = pentShape(i);
+                else shape2d = hexShape(i);
+
+                // Extrude to 3D
+                const geo = new THREE.ExtrudeGeometry(shape2d, {
+                    depth: height,
+                    bevelEnabled: true,
+                    bevelThickness: 1.5,
+                    bevelSize: 1,
+                    bevelSegments: 3
+                });
+
+                const mat = new THREE.MeshStandardMaterial({
+                    color: cols[i],
+                    roughness: 0.6,
+                    metalness: 0.05
+                });
+
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.rotation.x = -Math.PI / 2;
+                g.add(mesh);
+
+                // Edge outline
+                const edges = new THREE.LineSegments(
+                    new THREE.EdgesGeometry(geo, 30),
+                    new THREE.LineBasicMaterial({ color: 0x000000 })
+                );
+                edges.rotation.x = -Math.PI / 2;
+                g.add(edges);
+
+                // Layer shards for slotting: A on bottom, B in middle, C on top
+                const layerOffset = i * 2;
+                g.position.y = layerOffset;
+
+                shards.push({ g, mat, layerOffset });
+                scene.add(g);
+            }
+
+            updatePos();
+            updateShardButtons();
+        }
+
+        function updateShardButtons() {
+            const numShards = shape === 'triHub' ? 4 : 3;
+            const labels = shape === 'triHub' ? ['A', 'B', 'C', 'Hub'] : ['A', 'B', 'C'];
+            const container = document.getElementById('shardBtns');
+            if (container) {
+                container.className = numShards === 4 ? 'g2' : 'g3';
+                container.innerHTML = labels.map((l, i) =>
+                    `<button id="t${i}" class="${vis[i] ? 'on' : ''}" onclick="tog(${i})">${l}</button>`
+                ).join('');
+            }
+        }
+
+        // ============================================================
+        // PROGRAMMATIC SLOTTING SYSTEM
+        // Different division schemes with wave/scallop interlocking edges
+        // ============================================================
+        function buildTriProg() {
+            const S = size;
+            const h = S * Math.sqrt(3) / 2;
+            const cy = h / 3;
+
+            // Triangle vertices (centered on centroid)
+            const top = [0, h - cy];
+            const bl = [-S/2, -cy];
+            const br = [S/2, -cy];
+            const ctr = [0, 0];
+
+            // Parse style: "scheme-edgetype"
+            const [scheme, edgeType] = triProgStyle.split('-');
+
+            const slotHeight = height * 0.48;
+
+            // Get piece definitions based on division scheme
+            let piecesDef;
+            if (scheme === 'classic') {
+                // Classic: 3 wedges from center
+                piecesDef = [
+                    { points: [ctr, top, bl], innerEdges: [[0,1], [2,0]] },
+                    { points: [ctr, bl, br], innerEdges: [[0,1], [2,0]] },
+                    { points: [ctr, br, top], innerEdges: [[0,1], [2,0]] }
+                ];
+            } else if (scheme === 'layers') {
+                // Horizontal layers: 3 horizontal bands
+                const y1 = bl[1] + (top[1] - bl[1]) * 0.33;
+                const y2 = bl[1] + (top[1] - bl[1]) * 0.66;
+                // Calculate x coordinates at each y level
+                const xAtY = (y) => {
+                    const t = (y - bl[1]) / (top[1] - bl[1]);
+                    return S/2 * (1 - t);
+                };
+                const x1 = xAtY(y1);
+                const x2 = xAtY(y2);
+                piecesDef = [
+                    // Bottom band (trapezoid)
+                    { points: [bl, br, [x1, y1], [-x1, y1]], innerEdges: [[2,3]] },
+                    // Middle band (trapezoid)
+                    { points: [[-x1, y1], [x1, y1], [x2, y2], [-x2, y2]], innerEdges: [[0,1], [2,3]] },
+                    // Top band (triangle)
+                    { points: [[-x2, y2], [x2, y2], top], innerEdges: [[0,1]] }
+                ];
+            } else if (scheme === 'corners') {
+                // Corner huggers: each piece owns a corner
+                piecesDef = [
+                    { points: [top, ctr, bl], innerEdges: [[1,2], [0,1]] },
+                    { points: [bl, ctr, br], innerEdges: [[1,2], [0,1]] },
+                    { points: [br, ctr, top], innerEdges: [[1,2], [0,1]] }
+                ];
+            } else if (scheme === 'spiral') {
+                // Spiral: asymmetric division creating rotational flow
+                // Offset center point for each piece
+                const off = S * 0.15;
+                const c1 = [off * 0.5, off * 0.3];
+                const c2 = [-off * 0.3, -off * 0.2];
+                const c3 = [-off * 0.2, off * 0.1];
+                // Mid-edge points
+                const mTL = [(top[0] + bl[0]) * 0.5, (top[1] + bl[1]) * 0.5];
+                const mBT = [(bl[0] + br[0]) * 0.5, (bl[1] + br[1]) * 0.5];
+                const mTR = [(br[0] + top[0]) * 0.5, (br[1] + top[1]) * 0.5];
+                piecesDef = [
+                    { points: [top, mTL, ctr, mTR], innerEdges: [[1,2], [2,3]] },
+                    { points: [mTL, bl, mBT, ctr], innerEdges: [[2,3], [3,0]] },
+                    { points: [ctr, mBT, br, mTR], innerEdges: [[0,1], [3,0]] }
+                ];
+            } else if (scheme === 'bigsmall') {
+                // Big & Small: one large piece, two small corners
+                // Large piece takes 60% of the area
+                const splitY = bl[1] + (top[1] - bl[1]) * 0.45;
+                const splitX = S * 0.15;
+                const xAtSplit = S/2 * (1 - (splitY - bl[1]) / (top[1] - bl[1]));
+                piecesDef = [
+                    // Large L-shaped piece (left side + bottom)
+                    { points: [top, bl, br, [splitX, splitY], [-xAtSplit, splitY]], innerEdges: [[3,4], [4,0]] },
+                    // Small top-right piece
+                    { points: [[-xAtSplit, splitY], [splitX, splitY], [xAtSplit * 0.8, splitY + (top[1] - splitY) * 0.5]], innerEdges: [[0,1], [2,0]] },
+                    // Small corner piece
+                    { points: [[splitX, splitY], br, top, [xAtSplit * 0.8, splitY + (top[1] - splitY) * 0.5]], innerEdges: [[0,3], [3,2]] }
+                ];
+            } else if (scheme === 'pinwheel') {
+                // Pinwheel: offset divisions creating spinning effect
+                const off = S * 0.12;
+                const cOff = [off * 0.3, -off * 0.2]; // Offset center
+                // Points along each edge, offset to create rotation
+                const e1 = [top[0] + (bl[0] - top[0]) * 0.4, top[1] + (bl[1] - top[1]) * 0.4];
+                const e2 = [bl[0] + (br[0] - bl[0]) * 0.4, bl[1] + (br[1] - bl[1]) * 0.4];
+                const e3 = [br[0] + (top[0] - br[0]) * 0.4, br[1] + (top[1] - br[1]) * 0.4];
+                piecesDef = [
+                    { points: [top, e1, cOff, e3], innerEdges: [[1,2], [2,3]] },
+                    { points: [e1, bl, e2, cOff], innerEdges: [[2,3], [3,0]] },
+                    { points: [cOff, e2, br, e3], innerEdges: [[0,1], [3,0]] }
+                ];
+            } else if (scheme === 'nested') {
+                // Nested: inner triangle surrounded by outer pieces
+                const scale = 0.35;
+                const innerTop = [top[0] * scale, top[1] * scale + (1-scale) * ctr[1]];
+                const innerBL = [bl[0] * scale, bl[1] * scale + (1-scale) * ctr[1]];
+                const innerBR = [br[0] * scale, br[1] * scale + (1-scale) * ctr[1]];
+                piecesDef = [
+                    // Inner triangle
+                    { points: [innerTop, innerBL, innerBR], innerEdges: [[0,1], [1,2], [2,0]] },
+                    // Left outer piece
+                    { points: [top, bl, innerBL, innerTop], innerEdges: [[2,3], [3,0]] },
+                    // Right + bottom outer piece (wraps around)
+                    { points: [innerTop, innerBL, bl, br, top], innerEdges: [[0,1], [4,0]] }
+                ];
+            } else {
+                // Default to classic
+                piecesDef = [
+                    { points: [ctr, top, bl], innerEdges: [[0,1], [2,0]] },
+                    { points: [ctr, bl, br], innerEdges: [[0,1], [2,0]] },
+                    { points: [ctr, br, top], innerEdges: [[0,1], [2,0]] }
+                ];
+            }
+
+            for (let i = 0; i < 3; i++) {
+                const g = new THREE.Group();
+                const pDef = piecesDef[i];
+
+                // Generate two layers with complementary edges
+                const bottomShape = generateProgShape(i, pDef, S, edgeType, 'bottom');
+                const topShape = generateProgShape(i, pDef, S, edgeType, 'top');
+
+                // Bottom layer
+                const bottomGeo = new THREE.ExtrudeGeometry(bottomShape, {
+                    depth: slotHeight,
+                    bevelEnabled: true,
+                    bevelThickness: 0.8,
+                    bevelSize: 0.5,
+                    bevelSegments: 3
+                });
+
+                const bottomMat = new THREE.MeshStandardMaterial({
+                    color: cols3[i],
+                    roughness: 0.6,
+                    metalness: 0.05
+                });
+
+                const bottomMesh = new THREE.Mesh(bottomGeo, bottomMat);
+                bottomMesh.rotation.x = -Math.PI / 2;
+                g.add(bottomMesh);
+
+                // Top layer
+                const topGeo = new THREE.ExtrudeGeometry(topShape, {
+                    depth: height - slotHeight,
+                    bevelEnabled: true,
+                    bevelThickness: 0.8,
+                    bevelSize: 0.5,
+                    bevelSegments: 3
+                });
+
+                const topMat = new THREE.MeshStandardMaterial({
+                    color: cols3[i],
+                    roughness: 0.6,
+                    metalness: 0.05
+                });
+
+                const topMesh = new THREE.Mesh(topGeo, topMat);
+                topMesh.rotation.x = -Math.PI / 2;
+                topMesh.position.y = slotHeight;
+                g.add(topMesh);
+
+                // Edge outlines
+                const edges = new THREE.LineSegments(
+                    new THREE.EdgesGeometry(topGeo, 40),
+                    new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.4 })
+                );
+                edges.rotation.x = -Math.PI / 2;
+                edges.position.y = slotHeight;
+                g.add(edges);
+
+                shards.push({ g, mat: bottomMat, layerOffset: 0 });
+                scene.add(g);
+            }
+        }
+
+        // Generate shape with styled inner edges
+        function generateProgShape(pieceIdx, pDef, S, edgeType, layer) {
+            const shape = new THREE.Shape();
+            const points = pDef.points;
+            const innerEdges = pDef.innerEdges;
+
+            // Start at first point
+            shape.moveTo(points[0][0], points[0][1]);
+
+            // Draw each edge
+            for (let e = 0; e < points.length; e++) {
+                const startIdx = e;
+                const endIdx = (e + 1) % points.length;
+                const start = points[startIdx];
+                const end = points[endIdx];
+
+                // Check if this is an inner edge
+                const isInner = innerEdges.some(ie =>
+                    (ie[0] === startIdx && ie[1] === endIdx) ||
+                    (ie[0] === endIdx && ie[1] === startIdx)
+                );
+
+                if (isInner) {
+                    // Draw with wave/scallop pattern
+                    const dir = normalize([end[0] - start[0], end[1] - start[1]]);
+                    const perp = [-dir[1], dir[0]];
+                    const len = Math.sqrt((end[0]-start[0])**2 + (end[1]-start[1])**2);
+
+                    // Determine direction for interlocking
+                    const bulgeOut = (layer === 'bottom') ? (pieceIdx % 2 === 0) : (pieceIdx % 2 === 1);
+
+                    drawStyledEdge(shape, start, end, dir, perp, len, S, edgeType, bulgeOut);
+                } else {
+                    // Straight edge (outer perimeter)
+                    shape.lineTo(end[0], end[1]);
+                }
+            }
+
+            return shape;
+        }
+
+        // ============================================================
+        // TRIANGLE WITH CENTRAL HUB
+        // 3 corner triangles + 1 inverted central triangle hub
+        // ============================================================
+        function buildTriHub() {
+            const S = size;
+            const h = S * Math.sqrt(3) / 2;
+            const cy = h / 3;
+
+            // Big triangle vertices (centered on centroid)
+            const top = [0, h - cy];
+            const bl = [-S/2, -cy];
+            const br = [S/2, -cy];
+
+            // Hub size (inverted triangle in center)
+            const hubScale = 0.35;
+            const hubR = S * hubScale * 0.5;
+
+            // Hub vertices (inverted triangle - pointing down)
+            const hTL = [-hubR * Math.sqrt(3)/2, hubR * 0.5];  // top-left of hub
+            const hTR = [hubR * Math.sqrt(3)/2, hubR * 0.5];   // top-right of hub
+            const hB = [0, -hubR];                              // bottom of hub
+
+            const edgeType = triHubStyle;
+            const slotHeight = height * 0.48;
+
+            // 4 pieces: 3 corners + 1 hub
+            // Corner A: top vertex to hub's top edge
+            // Corner B: bottom-left vertex to hub's left edge
+            // Corner C: bottom-right vertex to hub's right edge
+            // Hub: inverted triangle in center
+
+            const piecesDef = [
+                // Corner A (top) - triangle from big top to hub top edge
+                { points: [top, hTL, hTR], innerEdges: [[1, 2]] },
+                // Corner B (bottom-left) - triangle from big BL to hub left edge
+                { points: [bl, hB, hTL], innerEdges: [[1, 2]] },
+                // Corner C (bottom-right) - triangle from big BR to hub right edge
+                { points: [br, hTR, hB], innerEdges: [[1, 2]] },
+                // Hub (center) - inverted triangle
+                { points: [hTL, hB, hTR], innerEdges: [[0, 1], [1, 2], [2, 0]] }
+            ];
+
+            // Use 4 colors
+            vis = [true, true, true, true];
+
+            for (let layer of ['bottom', 'top']) {
+                for (let i = 0; i < 4; i++) {
+                    const pDef = piecesDef[i];
+                    const shape2d = generateHubShape(i, pDef, S, edgeType, layer);
+
+                    const layerHeight = layer === 'bottom' ? slotHeight : height - slotHeight;
+                    const geo = new THREE.ExtrudeGeometry(shape2d, {
+                        depth: layerHeight,
+                        bevelEnabled: true,
+                        bevelThickness: 0.8,
+                        bevelSize: 0.5,
+                        bevelSegments: 2
+                    });
+
+                    const mat = new THREE.MeshStandardMaterial({
+                        color: cols4[i],
+                        roughness: 0.6,
+                        metalness: 0.05
+                    });
+
+                    const mesh = new THREE.Mesh(geo, mat);
+                    mesh.rotation.x = -Math.PI / 2;
+
+                    const edges = new THREE.LineSegments(
+                        new THREE.EdgesGeometry(geo, 30),
+                        new THREE.LineBasicMaterial({ color: 0x000000 })
+                    );
+                    edges.rotation.x = -Math.PI / 2;
+
+                    const g = new THREE.Group();
+                    g.add(mesh);
+                    g.add(edges);
+
+                    // Stack layers
+                    const baseY = layer === 'bottom' ? 0 : slotHeight;
+                    g.position.y = baseY;
+
+                    if (layer === 'bottom') {
+                        shards.push({ g, mat, layerOffset: baseY, pieceIdx: i });
+                        scene.add(g);
+                    } else {
+                        // Add top layer to same shard group
+                        shards[i].g.add(mesh.clone());
+                        shards[i].g.add(edges.clone());
+                    }
+                }
+            }
+        }
+
+        // Generate shape for hub-style pieces
+        function generateHubShape(pieceIdx, pDef, S, edgeType, layer) {
+            const shape = new THREE.Shape();
+            const points = pDef.points;
+            const innerEdges = pDef.innerEdges;
+
+            shape.moveTo(points[0][0], points[0][1]);
+
+            for (let e = 0; e < points.length; e++) {
+                const startIdx = e;
+                const endIdx = (e + 1) % points.length;
+                const start = points[startIdx];
+                const end = points[endIdx];
+
+                // Check if this edge is an inner edge (connects to hub)
+                const isInner = innerEdges.some(ie =>
+                    (ie[0] === startIdx && ie[1] === endIdx) ||
+                    (ie[0] === endIdx && ie[1] === startIdx)
+                );
+
+                if (isInner) {
+                    const dir = normalize([end[0] - start[0], end[1] - start[1]]);
+                    const perp = [-dir[1], dir[0]];
+                    const len = Math.sqrt((end[0]-start[0])**2 + (end[1]-start[1])**2);
+
+                    // Alternate bulge direction based on piece and layer
+                    const bulgeOut = (layer === 'bottom') ? (pieceIdx % 2 === 0) : (pieceIdx % 2 === 1);
+
+                    drawHubEdge(shape, start, end, dir, perp, len, S, edgeType, bulgeOut);
+                } else {
+                    shape.lineTo(end[0], end[1]);
+                }
+            }
+
+            return shape;
+        }
+
+        // Draw styled edge for hub pieces
+        function drawHubEdge(shape, start, end, dir, perp, len, S, style, bulgeOut) {
+            const sign = bulgeOut ? 1 : -1;
+            const steps = 20;
+
+            if (style === 'wave') {
+                const amplitude = S * 0.025;
+                const freq = 2.5;
+                for (let i = 1; i <= steps; i++) {
+                    const t = i / steps;
+                    const dist = t * len;
+                    const waveOffset = Math.sin(t * Math.PI * freq) * amplitude * sign;
+                    const bulge = Math.sin(t * Math.PI) * amplitude * 0.4 * sign;
+                    const x = start[0] + dir[0] * dist + perp[0] * (waveOffset + bulge);
+                    const y = start[1] + dir[1] * dist + perp[1] * (waveOffset + bulge);
+                    shape.lineTo(x, y);
+                }
+            } else if (style === 'scallop') {
+                const numScallops = 3;
+                const scallopsPerEdge = numScallops;
+                for (let s = 0; s < scallopsPerEdge; s++) {
+                    const t0 = s / scallopsPerEdge;
+                    const t1 = (s + 1) / scallopsPerEdge;
+                    const subSteps = Math.ceil(steps / scallopsPerEdge);
+                    for (let i = 1; i <= subSteps; i++) {
+                        const t = t0 + (t1 - t0) * (i / subSteps);
+                        const localT = (t - t0) / (t1 - t0);
+                        const dist = t * len;
+                        const scallop = Math.sin(localT * Math.PI) * S * 0.025 * sign;
+                        const x = start[0] + dir[0] * dist + perp[0] * scallop;
+                        const y = start[1] + dir[1] * dist + perp[1] * scallop;
+                        shape.lineTo(x, y);
+                    }
+                }
+            } else if (style === 'zigzag') {
+                const numZigs = 4;
+                for (let i = 1; i <= steps; i++) {
+                    const t = i / steps;
+                    const dist = t * len;
+                    const zigPhase = (t * numZigs) % 1;
+                    const zigVal = zigPhase < 0.5 ? zigPhase * 2 : 2 - zigPhase * 2;
+                    const zigOffset = (zigVal - 0.5) * S * 0.03 * sign;
+                    const x = start[0] + dir[0] * dist + perp[0] * zigOffset;
+                    const y = start[1] + dir[1] * dist + perp[1] * zigOffset;
+                    shape.lineTo(x, y);
+                }
+            } else {
+                shape.lineTo(end[0], end[1]);
+            }
+        }
+
+        // ============================================================
+        // PENTAGON PROGRAMMATIC SLOTTING
+        // ============================================================
+        function buildPentProg() {
+            const S = size;
+            const ctr = [0, 0];
+
+            // Pentagon vertices (point up)
+            const v = [];
+            for (let i = 0; i < 5; i++) {
+                const a = Math.PI/2 - i * 2 * Math.PI / 5;
+                v.push([S * Math.cos(a), S * Math.sin(a)]);
+            }
+
+            // 3 pieces dividing the pentagon:
+            // Piece 0: v4, v0, v1 (top, 2 edges)
+            // Piece 1: v1, v2, v3 (bottom-left, 2 edges)
+            // Piece 2: v3, v4 (bottom-right, 1 edge)
+            const pieces = [
+                { verts: [v[4], v[0], v[1]] },
+                { verts: [v[1], v[2], v[3]] },
+                { verts: [v[3], v[4]] }
+            ];
+
+            const slotHeight = height * 0.48;
+            let edgeStyle = pentProgStyle;
+
+            for (let i = 0; i < 3; i++) {
+                const g = new THREE.Group();
+
+                const bottomShape = generatePentShape(i, ctr, pieces[i].verts, S, edgeStyle, 'bottom');
+                const topShape = generatePentShape(i, ctr, pieces[i].verts, S, edgeStyle, 'top');
+
+                const bottomGeo = new THREE.ExtrudeGeometry(bottomShape, {
+                    depth: slotHeight,
+                    bevelEnabled: true,
+                    bevelThickness: 0.8,
+                    bevelSize: 0.5,
+                    bevelSegments: 3
+                });
+
+                const bottomMat = new THREE.MeshStandardMaterial({
+                    color: cols3[i],
+                    roughness: 0.6,
+                    metalness: 0.05
+                });
+
+                const bottomMesh = new THREE.Mesh(bottomGeo, bottomMat);
+                bottomMesh.rotation.x = -Math.PI / 2;
+                g.add(bottomMesh);
+
+                const topGeo = new THREE.ExtrudeGeometry(topShape, {
+                    depth: height - slotHeight,
+                    bevelEnabled: true,
+                    bevelThickness: 0.8,
+                    bevelSize: 0.5,
+                    bevelSegments: 3
+                });
+
+                const topMat = new THREE.MeshStandardMaterial({
+                    color: cols3[i],
+                    roughness: 0.6,
+                    metalness: 0.05
+                });
+
+                const topMesh = new THREE.Mesh(topGeo, topMat);
+                topMesh.rotation.x = -Math.PI / 2;
+                topMesh.position.y = slotHeight;
+                g.add(topMesh);
+
+                const edges = new THREE.LineSegments(
+                    new THREE.EdgesGeometry(bottomGeo, 40),
+                    new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.3 })
+                );
+                edges.rotation.x = -Math.PI / 2;
+                g.add(edges);
+
+                shards.push({ g, mat: bottomMat, layerOffset: 0 });
+                scene.add(g);
+            }
+        }
+
+        function generatePentShape(pieceIdx, ctr, verts, S, edgeStyle, layer) {
+            const shape = new THREE.Shape();
+            shape.moveTo(ctr[0], ctr[1]);
+
+            // First inner edge: ctr -> verts[0]
+            const v0 = verts[0];
+            const dir0 = normalize([v0[0] - ctr[0], v0[1] - ctr[1]]);
+            const perp0 = [-dir0[1], dir0[0]];
+            const len0 = Math.sqrt((v0[0]-ctr[0])**2 + (v0[1]-ctr[1])**2);
+            const out0 = (layer === 'bottom') ? (pieceIdx % 2 === 0) : (pieceIdx % 2 === 1);
+            drawStyledEdge(shape, ctr, v0, dir0, perp0, len0, S, edgeStyle, out0);
+
+            // Outer edges (straight)
+            for (let i = 1; i < verts.length; i++) {
+                shape.lineTo(verts[i][0], verts[i][1]);
+            }
+
+            // Last inner edge: verts[last] -> ctr
+            const vLast = verts[verts.length - 1];
+            const dirLast = normalize([ctr[0] - vLast[0], ctr[1] - vLast[1]]);
+            const perpLast = [-dirLast[1], dirLast[0]];
+            const lenLast = Math.sqrt((ctr[0]-vLast[0])**2 + (ctr[1]-vLast[1])**2);
+            const outLast = (layer === 'bottom') ? ((pieceIdx + 1) % 2 === 0) : ((pieceIdx + 1) % 2 === 1);
+            drawStyledEdge(shape, vLast, ctr, dirLast, perpLast, lenLast, S, edgeStyle, outLast);
+
+            return shape;
+        }
+
+        // ============================================================
+        // HEXAGON PROGRAMMATIC SLOTTING
+        // ============================================================
+        function buildHexProg() {
+            const S = size;
+            const ctr = [0, 0];
+
+            // Hexagon vertices
+            const v = [];
+            for (let i = 0; i < 6; i++) {
+                const a = i * Math.PI / 3;
+                v.push([S * Math.cos(a), S * Math.sin(a)]);
+            }
+
+            // 3 rhombus pieces
+            const pieces = [
+                { verts: [v[0], v[1], v[2]] },
+                { verts: [v[2], v[3], v[4]] },
+                { verts: [v[4], v[5], v[0]] }
+            ];
+
+            const slotHeight = height * 0.48;
+            let edgeStyle = hexProgStyle;
+
+            for (let i = 0; i < 3; i++) {
+                const g = new THREE.Group();
+
+                const bottomShape = generateHexShape(i, ctr, pieces[i].verts, S, edgeStyle, 'bottom');
+                const topShape = generateHexShape(i, ctr, pieces[i].verts, S, edgeStyle, 'top');
+
+                const bottomGeo = new THREE.ExtrudeGeometry(bottomShape, {
+                    depth: slotHeight,
+                    bevelEnabled: true,
+                    bevelThickness: 0.8,
+                    bevelSize: 0.5,
+                    bevelSegments: 3
+                });
+
+                const bottomMat = new THREE.MeshStandardMaterial({
+                    color: cols3[i],
+                    roughness: 0.6,
+                    metalness: 0.05
+                });
+
+                const bottomMesh = new THREE.Mesh(bottomGeo, bottomMat);
+                bottomMesh.rotation.x = -Math.PI / 2;
+                g.add(bottomMesh);
+
+                const topGeo = new THREE.ExtrudeGeometry(topShape, {
+                    depth: height - slotHeight,
+                    bevelEnabled: true,
+                    bevelThickness: 0.8,
+                    bevelSize: 0.5,
+                    bevelSegments: 3
+                });
+
+                const topMat = new THREE.MeshStandardMaterial({
+                    color: cols3[i],
+                    roughness: 0.6,
+                    metalness: 0.05
+                });
+
+                const topMesh = new THREE.Mesh(topGeo, topMat);
+                topMesh.rotation.x = -Math.PI / 2;
+                topMesh.position.y = slotHeight;
+                g.add(topMesh);
+
+                const edges = new THREE.LineSegments(
+                    new THREE.EdgesGeometry(bottomGeo, 40),
+                    new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.3 })
+                );
+                edges.rotation.x = -Math.PI / 2;
+                g.add(edges);
+
+                shards.push({ g, mat: bottomMat, layerOffset: 0 });
+                scene.add(g);
+            }
+        }
+
+        function generateHexShape(pieceIdx, ctr, verts, S, edgeStyle, layer) {
+            const shape = new THREE.Shape();
+            shape.moveTo(ctr[0], ctr[1]);
+
+            // First inner edge: ctr -> verts[0]
+            const v0 = verts[0];
+            const dir0 = normalize([v0[0] - ctr[0], v0[1] - ctr[1]]);
+            const perp0 = [-dir0[1], dir0[0]];
+            const len0 = Math.sqrt((v0[0]-ctr[0])**2 + (v0[1]-ctr[1])**2);
+            const out0 = (layer === 'bottom') ? (pieceIdx % 2 === 0) : (pieceIdx % 2 === 1);
+            drawStyledEdge(shape, ctr, v0, dir0, perp0, len0, S, edgeStyle, out0);
+
+            // Outer edges (straight)
+            for (let i = 1; i < verts.length; i++) {
+                shape.lineTo(verts[i][0], verts[i][1]);
+            }
+
+            // Last inner edge: verts[last] -> ctr
+            const vLast = verts[verts.length - 1];
+            const dirLast = normalize([ctr[0] - vLast[0], ctr[1] - vLast[1]]);
+            const perpLast = [-dirLast[1], dirLast[0]];
+            const lenLast = Math.sqrt((ctr[0]-vLast[0])**2 + (ctr[1]-vLast[1])**2);
+            const outLast = (layer === 'bottom') ? ((pieceIdx + 1) % 2 === 0) : ((pieceIdx + 1) % 2 === 1);
+            drawStyledEdge(shape, vLast, ctr, dirLast, perpLast, lenLast, S, edgeStyle, outLast);
+
+            return shape;
+        }
+
+        // Generate shape with subtle patterned inner edges
+        function generateSubtleShape(pieceIdx, ctr, v1, v2, S, edgeStyle, layer) {
+            const shape = new THREE.Shape();
+
+            // Edge directions and perpendiculars
+            const edge1Dir = normalize([v1[0] - ctr[0], v1[1] - ctr[1]]);
+            const edge2Dir = normalize([v2[0] - ctr[0], v2[1] - ctr[1]]);
+            const perp1 = [-edge1Dir[1], edge1Dir[0]];
+            const perp2 = [edge2Dir[1], -edge2Dir[0]];
+
+            const len1 = Math.sqrt((v1[0]-ctr[0])**2 + (v1[1]-ctr[1])**2);
+            const len2 = Math.sqrt((v2[0]-ctr[0])**2 + (v2[1]-ctr[1])**2);
+
+            // Determine direction based on piece index and layer
+            const edge1Out = (layer === 'bottom') ? (pieceIdx % 2 === 0) : (pieceIdx % 2 === 1);
+            const edge2Out = (layer === 'bottom') ? ((pieceIdx + 1) % 2 === 0) : ((pieceIdx + 1) % 2 === 1);
+
+            shape.moveTo(ctr[0], ctr[1]);
+
+            // Draw edge 1 with selected style
+            drawStyledEdge(shape, ctr, v1, edge1Dir, perp1, len1, S, edgeStyle, edge1Out);
+
+            // Outer edge (straight)
+            shape.lineTo(v2[0], v2[1]);
+
+            // Draw edge 2 (reversed direction)
+            const revDir = [-edge2Dir[0], -edge2Dir[1]];
+            const revPerp = [-perp2[0], -perp2[1]];
+            drawStyledEdge(shape, v2, ctr, revDir, revPerp, len2, S, edgeStyle, edge2Out);
+
+            return shape;
+        }
+
+        // Draw an edge with the selected style pattern
+        function drawStyledEdge(shape, start, end, dir, perp, len, S, style, bulgeOut) {
+            const sign = bulgeOut ? 1 : -1;
+            const steps = 24;
+
+            if (style === 'wave') {
+                // Gentle sine waves
+                const amplitude = S * 0.04;
+                const freq = 2;
+                for (let i = 1; i <= steps; i++) {
+                    const t = i / steps;
+                    const dist = t * len;
+                    const waveOffset = Math.sin(t * Math.PI * freq) * amplitude * sign;
+                    const bulge = Math.sin(t * Math.PI) * amplitude * 0.5 * sign;
+                    const x = start[0] + dir[0] * dist + perp[0] * (waveOffset + bulge);
+                    const y = start[1] + dir[1] * dist + perp[1] * (waveOffset + bulge);
+                    shape.lineTo(x, y);
+                }
+            } else if (style === 'scallop') {
+                // Scalloped edge - semicircular bumps
+                const numScallops = 3;
+                const scallopLen = len / numScallops;
+                const amplitude = S * 0.05;
+
+                for (let s = 0; s < numScallops; s++) {
+                    const startT = s / numScallops;
+                    const endT = (s + 1) / numScallops;
+
+                    // Draw semicircle for each scallop
+                    for (let i = 0; i <= 8; i++) {
+                        const localT = i / 8;
+                        const t = startT + localT * (endT - startT);
+                        const dist = t * len;
+                        // Semicircle offset
+                        const scallop = Math.sin(localT * Math.PI) * amplitude * sign;
+                        const x = start[0] + dir[0] * dist + perp[0] * scallop;
+                        const y = start[1] + dir[1] * dist + perp[1] * scallop;
+                        shape.lineTo(x, y);
+                    }
+                }
+            } else if (style === 'zigzag') {
+                // Soft zigzag - rounded peaks and valleys
+                const numZigs = 4;
+                const amplitude = S * 0.035;
+
+                for (let i = 1; i <= steps; i++) {
+                    const t = i / steps;
+                    const dist = t * len;
+                    // Triangle wave (zigzag) with smoothing
+                    const zigPhase = (t * numZigs) % 1;
+                    const zigValue = zigPhase < 0.5 ? (zigPhase * 4 - 1) : (3 - zigPhase * 4);
+                    // Smooth the zigzag slightly
+                    const smoothZig = Math.sign(zigValue) * Math.pow(Math.abs(zigValue), 0.7);
+                    const offset = smoothZig * amplitude * sign;
+                    const x = start[0] + dir[0] * dist + perp[0] * offset;
+                    const y = start[1] + dir[1] * dist + perp[1] * offset;
+                    shape.lineTo(x, y);
+                }
+            }
+        }
+
+        // ============================================================
+        // KITE SHAPE - Different pieces that form bilateral symmetry
+        // Piece A: Tall triangle (top)
+        // Piece B: Small triangle (bottom-left)
+        // Piece C: Small triangle (bottom-right, mirror of B)
+        // ============================================================
+        function buildKite() {
+            const S = size;
+            const edgeType = kiteStyle;
+            const slotHeight = height * 0.48;
+
+            // Kite geometry - taller than wide
+            const kiteHeight = S * 1.4;
+            const kiteWidth = S * 0.8;
+            const waistY = kiteHeight * 0.3; // Where top meets bottom pieces
+
+            // Vertices
+            const top = [0, kiteHeight * 0.5];           // Top point
+            const left = [-kiteWidth / 2, waistY - kiteHeight * 0.5];  // Left point
+            const right = [kiteWidth / 2, waistY - kiteHeight * 0.5]; // Right point
+            const bottom = [0, -kiteHeight * 0.5];       // Bottom point
+            const waistLeft = [-kiteWidth * 0.3, waistY - kiteHeight * 0.5 + (top[1] - left[1]) * 0.4];
+            const waistRight = [kiteWidth * 0.3, waistY - kiteHeight * 0.5 + (top[1] - right[1]) * 0.4];
+
+            // Three different shaped pieces
+            const piecesDef = [
+                // Piece A: Tall triangle at top (isoceles)
+                { points: [top, waistLeft, waistRight], innerEdges: [[1, 2]] },
+                // Piece B: Bottom-left triangle
+                { points: [waistLeft, left, bottom], innerEdges: [[2, 0]] },
+                // Piece C: Bottom-right triangle (mirror of B)
+                { points: [waistRight, bottom, right], innerEdges: [[0, 1]] }
+            ];
+
+            vis = [true, true, true];
+
+            for (let layer of ['bottom', 'top']) {
+                for (let i = 0; i < 3; i++) {
+                    const pDef = piecesDef[i];
+                    const shape2d = generateKiteShape(i, pDef, S, edgeType, layer);
+
+                    const layerHeight = layer === 'bottom' ? slotHeight : height - slotHeight;
+                    const geo = new THREE.ExtrudeGeometry(shape2d, {
+                        depth: layerHeight,
+                        bevelEnabled: true,
+                        bevelThickness: 0.8,
+                        bevelSize: 0.5,
+                        bevelSegments: 2
+                    });
+
+                    const mat = new THREE.MeshStandardMaterial({
+                        color: cols3[i],
+                        roughness: 0.6,
+                        metalness: 0.05
+                    });
+
+                    const mesh = new THREE.Mesh(geo, mat);
+                    mesh.rotation.x = -Math.PI / 2;
+
+                    const edges = new THREE.LineSegments(
+                        new THREE.EdgesGeometry(geo, 30),
+                        new THREE.LineBasicMaterial({ color: 0x000000 })
+                    );
+                    edges.rotation.x = -Math.PI / 2;
+
+                    const g = new THREE.Group();
+                    g.add(mesh);
+                    g.add(edges);
+
+                    const baseY = layer === 'bottom' ? 0 : slotHeight;
+                    g.position.y = baseY;
+
+                    if (layer === 'bottom') {
+                        shards.push({ g, mat, layerOffset: baseY, pieceIdx: i });
+                        scene.add(g);
+                    } else {
+                        shards[i].g.add(mesh.clone());
+                        shards[i].g.add(edges.clone());
+                    }
+                }
+            }
+        }
+
+        function generateKiteShape(pieceIdx, pDef, S, edgeType, layer) {
+            const shape = new THREE.Shape();
+            const points = pDef.points;
+            const innerEdges = pDef.innerEdges;
+
+            shape.moveTo(points[0][0], points[0][1]);
+
+            for (let e = 0; e < points.length; e++) {
+                const startIdx = e;
+                const endIdx = (e + 1) % points.length;
+                const start = points[startIdx];
+                const end = points[endIdx];
+
+                const isInner = innerEdges.some(ie =>
+                    (ie[0] === startIdx && ie[1] === endIdx) ||
+                    (ie[0] === endIdx && ie[1] === startIdx)
+                );
+
+                if (isInner) {
+                    const dir = normalize([end[0] - start[0], end[1] - start[1]]);
+                    const perp = [-dir[1], dir[0]];
+                    const len = Math.sqrt((end[0]-start[0])**2 + (end[1]-start[1])**2);
+                    const bulgeOut = (layer === 'bottom') ? (pieceIdx % 2 === 0) : (pieceIdx % 2 === 1);
+                    drawHubEdge(shape, start, end, dir, perp, len, S, edgeType, bulgeOut);
+                } else {
+                    shape.lineTo(end[0], end[1]);
+                }
+            }
+            return shape;
+        }
+
+        // ============================================================
+        // DIAMOND SHAPE - Vertical stack with different pieces
+        // Piece A: Triangle (top)
+        // Piece B: Trapezoid/hexagon (middle)
+        // Piece C: Triangle (bottom, inverted)
+        // ============================================================
+        function buildDiamond() {
+            const S = size;
+            const edgeType = diamondStyle;
+            const slotHeight = height * 0.48;
+
+            // Diamond geometry
+            const diamondHeight = S * 1.2;
+            const diamondWidth = S * 0.7;
+            const bandHeight = diamondHeight * 0.25; // Middle band height
+
+            // Vertices
+            const top = [0, diamondHeight / 2];
+            const bottom = [0, -diamondHeight / 2];
+            const midTopLeft = [-diamondWidth / 2, bandHeight / 2];
+            const midTopRight = [diamondWidth / 2, bandHeight / 2];
+            const midBotLeft = [-diamondWidth / 2, -bandHeight / 2];
+            const midBotRight = [diamondWidth / 2, -bandHeight / 2];
+
+            // Three different shaped pieces
+            const piecesDef = [
+                // Piece A: Top triangle
+                { points: [top, midTopLeft, midTopRight], innerEdges: [[1, 2]] },
+                // Piece B: Middle hexagon/band
+                { points: [midTopLeft, midBotLeft, midBotRight, midTopRight], innerEdges: [[0, 3], [1, 2]] },
+                // Piece C: Bottom triangle (inverted)
+                { points: [midBotLeft, bottom, midBotRight], innerEdges: [[2, 0]] }
+            ];
+
+            vis = [true, true, true];
+
+            for (let layer of ['bottom', 'top']) {
+                for (let i = 0; i < 3; i++) {
+                    const pDef = piecesDef[i];
+                    const shape2d = generateDiamondShape(i, pDef, S, edgeType, layer);
+
+                    const layerHeight = layer === 'bottom' ? slotHeight : height - slotHeight;
+                    const geo = new THREE.ExtrudeGeometry(shape2d, {
+                        depth: layerHeight,
+                        bevelEnabled: true,
+                        bevelThickness: 0.8,
+                        bevelSize: 0.5,
+                        bevelSegments: 2
+                    });
+
+                    const mat = new THREE.MeshStandardMaterial({
+                        color: cols3[i],
+                        roughness: 0.6,
+                        metalness: 0.05
+                    });
+
+                    const mesh = new THREE.Mesh(geo, mat);
+                    mesh.rotation.x = -Math.PI / 2;
+
+                    const edges = new THREE.LineSegments(
+                        new THREE.EdgesGeometry(geo, 30),
+                        new THREE.LineBasicMaterial({ color: 0x000000 })
+                    );
+                    edges.rotation.x = -Math.PI / 2;
+
+                    const g = new THREE.Group();
+                    g.add(mesh);
+                    g.add(edges);
+
+                    const baseY = layer === 'bottom' ? 0 : slotHeight;
+                    g.position.y = baseY;
+
+                    if (layer === 'bottom') {
+                        shards.push({ g, mat, layerOffset: baseY, pieceIdx: i });
+                        scene.add(g);
+                    } else {
+                        shards[i].g.add(mesh.clone());
+                        shards[i].g.add(edges.clone());
+                    }
+                }
+            }
+        }
+
+        function generateDiamondShape(pieceIdx, pDef, S, edgeType, layer) {
+            const shape = new THREE.Shape();
+            const points = pDef.points;
+            const innerEdges = pDef.innerEdges;
+
+            shape.moveTo(points[0][0], points[0][1]);
+
+            for (let e = 0; e < points.length; e++) {
+                const startIdx = e;
+                const endIdx = (e + 1) % points.length;
+                const start = points[startIdx];
+                const end = points[endIdx];
+
+                const isInner = innerEdges.some(ie =>
+                    (ie[0] === startIdx && ie[1] === endIdx) ||
+                    (ie[0] === endIdx && ie[1] === startIdx)
+                );
+
+                if (isInner) {
+                    const dir = normalize([end[0] - start[0], end[1] - start[1]]);
+                    const perp = [-dir[1], dir[0]];
+                    const len = Math.sqrt((end[0]-start[0])**2 + (end[1]-start[1])**2);
+                    const bulgeOut = (layer === 'bottom') ? (pieceIdx % 2 === 0) : (pieceIdx % 2 === 1);
+                    drawHubEdge(shape, start, end, dir, perp, len, S, edgeType, bulgeOut);
+                } else {
+                    shape.lineTo(end[0], end[1]);
+                }
+            }
+            return shape;
+        }
+
+        // ============================================================
+        // ARROW SHAPE - Arrowhead + two tail rectangles
+        // Piece A: Triangle (arrowhead)
+        // Piece B: Rectangle (left tail)
+        // Piece C: Rectangle (right tail, mirror of B)
+        // ============================================================
+        function buildArrow() {
+            const S = size;
+            const edgeType = arrowStyle;
+            const slotHeight = height * 0.48;
+
+            // Arrow geometry
+            const arrowHeight = S * 1.3;
+            const headHeight = S * 0.6;
+            const headWidth = S * 0.7;
+            const tailWidth = S * 0.25;
+            const neckY = arrowHeight * 0.5 - headHeight;
+
+            // Vertices
+            const tip = [0, arrowHeight * 0.5];
+            const headLeft = [-headWidth / 2, neckY];
+            const headRight = [headWidth / 2, neckY];
+            const neckLeft = [-tailWidth / 2, neckY];
+            const neckRight = [tailWidth / 2, neckY];
+            const tailLeft = [-tailWidth / 2, -arrowHeight * 0.5];
+            const tailRight = [tailWidth / 2, -arrowHeight * 0.5];
+
+            const piecesDef = [
+                // Piece A: Arrowhead triangle
+                { points: [tip, headLeft, neckLeft, neckRight, headRight], innerEdges: [[2, 3]] },
+                // Piece B: Left tail rectangle
+                { points: [neckLeft, tailLeft, [0, -arrowHeight * 0.5], [0, neckY]], innerEdges: [[2, 3], [3, 0]] },
+                // Piece C: Right tail rectangle
+                { points: [[0, neckY], [0, -arrowHeight * 0.5], tailRight, neckRight], innerEdges: [[0, 1], [3, 0]] }
+            ];
+
+            vis = [true, true, true];
+
+            for (let layer of ['bottom', 'top']) {
+                for (let i = 0; i < 3; i++) {
+                    const pDef = piecesDef[i];
+                    const shape2d = generateArrowShape(i, pDef, S, edgeType, layer);
+
+                    const layerHeight = layer === 'bottom' ? slotHeight : height - slotHeight;
+                    const geo = new THREE.ExtrudeGeometry(shape2d, {
+                        depth: layerHeight,
+                        bevelEnabled: true,
+                        bevelThickness: 0.8,
+                        bevelSize: 0.5,
+                        bevelSegments: 2
+                    });
+
+                    const mat = new THREE.MeshStandardMaterial({
+                        color: cols3[i],
+                        roughness: 0.6,
+                        metalness: 0.05
+                    });
+
+                    const mesh = new THREE.Mesh(geo, mat);
+                    mesh.rotation.x = -Math.PI / 2;
+
+                    const edges = new THREE.LineSegments(
+                        new THREE.EdgesGeometry(geo, 30),
+                        new THREE.LineBasicMaterial({ color: 0x000000 })
+                    );
+                    edges.rotation.x = -Math.PI / 2;
+
+                    const g = new THREE.Group();
+                    g.add(mesh);
+                    g.add(edges);
+
+                    const baseY = layer === 'bottom' ? 0 : slotHeight;
+                    g.position.y = baseY;
+
+                    if (layer === 'bottom') {
+                        shards.push({ g, mat, layerOffset: baseY, pieceIdx: i });
+                        scene.add(g);
+                    } else {
+                        shards[i].g.add(mesh.clone());
+                        shards[i].g.add(edges.clone());
+                    }
+                }
+            }
+        }
+
+        function generateArrowShape(pieceIdx, pDef, S, edgeType, layer) {
+            const shape = new THREE.Shape();
+            const points = pDef.points;
+            const innerEdges = pDef.innerEdges;
+
+            shape.moveTo(points[0][0], points[0][1]);
+
+            for (let e = 0; e < points.length; e++) {
+                const startIdx = e;
+                const endIdx = (e + 1) % points.length;
+                const start = points[startIdx];
+                const end = points[endIdx];
+
+                const isInner = innerEdges.some(ie =>
+                    (ie[0] === startIdx && ie[1] === endIdx) ||
+                    (ie[0] === endIdx && ie[1] === startIdx)
+                );
+
+                if (isInner) {
+                    const dir = normalize([end[0] - start[0], end[1] - start[1]]);
+                    const perp = [-dir[1], dir[0]];
+                    const len = Math.sqrt((end[0]-start[0])**2 + (end[1]-start[1])**2);
+                    const bulgeOut = (layer === 'bottom') ? (pieceIdx % 2 === 0) : (pieceIdx % 2 === 1);
+                    drawHubEdge(shape, start, end, dir, perp, len, S, edgeType, bulgeOut);
+                } else {
+                    shape.lineTo(end[0], end[1]);
+                }
+            }
+            return shape;
+        }
+
+        // ============================================================
+        // HOURGLASS SHAPE - Two triangles with square middle
+        // Piece A: Triangle (top, pointing up)
+        // Piece B: Square (middle connector)
+        // Piece C: Triangle (bottom, pointing down)
+        // ============================================================
+        function buildHourglass() {
+            const S = size;
+            const edgeType = hourglassStyle;
+            const slotHeight = height * 0.48;
+
+            // Hourglass geometry
+            const totalHeight = S * 1.4;
+            const triHeight = S * 0.5;
+            const midHeight = S * 0.25;
+            const topWidth = S * 0.6;
+            const midWidth = S * 0.3;
+
+            // Vertices
+            const topTip = [0, totalHeight / 2];
+            const topLeft = [-topWidth / 2, totalHeight / 2 - triHeight];
+            const topRight = [topWidth / 2, totalHeight / 2 - triHeight];
+            const midTopLeft = [-midWidth / 2, midHeight / 2];
+            const midTopRight = [midWidth / 2, midHeight / 2];
+            const midBotLeft = [-midWidth / 2, -midHeight / 2];
+            const midBotRight = [midWidth / 2, -midHeight / 2];
+            const botLeft = [-topWidth / 2, -totalHeight / 2 + triHeight];
+            const botRight = [topWidth / 2, -totalHeight / 2 + triHeight];
+            const botTip = [0, -totalHeight / 2];
+
+            const piecesDef = [
+                // Piece A: Top triangle
+                { points: [topTip, topLeft, midTopLeft, midTopRight, topRight], innerEdges: [[2, 3]] },
+                // Piece B: Middle square/connector
+                { points: [midTopLeft, midBotLeft, midBotRight, midTopRight], innerEdges: [[0, 3], [1, 2]] },
+                // Piece C: Bottom triangle (inverted)
+                { points: [midBotLeft, botLeft, botTip, botRight, midBotRight], innerEdges: [[4, 0]] }
+            ];
+
+            vis = [true, true, true];
+
+            for (let layer of ['bottom', 'top']) {
+                for (let i = 0; i < 3; i++) {
+                    const pDef = piecesDef[i];
+                    const shape2d = generateHourglassShape(i, pDef, S, edgeType, layer);
+
+                    const layerHeight = layer === 'bottom' ? slotHeight : height - slotHeight;
+                    const geo = new THREE.ExtrudeGeometry(shape2d, {
+                        depth: layerHeight,
+                        bevelEnabled: true,
+                        bevelThickness: 0.8,
+                        bevelSize: 0.5,
+                        bevelSegments: 2
+                    });
+
+                    const mat = new THREE.MeshStandardMaterial({
+                        color: cols3[i],
+                        roughness: 0.6,
+                        metalness: 0.05
+                    });
+
+                    const mesh = new THREE.Mesh(geo, mat);
+                    mesh.rotation.x = -Math.PI / 2;
+
+                    const edges = new THREE.LineSegments(
+                        new THREE.EdgesGeometry(geo, 30),
+                        new THREE.LineBasicMaterial({ color: 0x000000 })
+                    );
+                    edges.rotation.x = -Math.PI / 2;
+
+                    const g = new THREE.Group();
+                    g.add(mesh);
+                    g.add(edges);
+
+                    const baseY = layer === 'bottom' ? 0 : slotHeight;
+                    g.position.y = baseY;
+
+                    if (layer === 'bottom') {
+                        shards.push({ g, mat, layerOffset: baseY, pieceIdx: i });
+                        scene.add(g);
+                    } else {
+                        shards[i].g.add(mesh.clone());
+                        shards[i].g.add(edges.clone());
+                    }
+                }
+            }
+        }
+
+        function generateHourglassShape(pieceIdx, pDef, S, edgeType, layer) {
+            const shape = new THREE.Shape();
+            const points = pDef.points;
+            const innerEdges = pDef.innerEdges;
+
+            shape.moveTo(points[0][0], points[0][1]);
+
+            for (let e = 0; e < points.length; e++) {
+                const startIdx = e;
+                const endIdx = (e + 1) % points.length;
+                const start = points[startIdx];
+                const end = points[endIdx];
+
+                const isInner = innerEdges.some(ie =>
+                    (ie[0] === startIdx && ie[1] === endIdx) ||
+                    (ie[0] === endIdx && ie[1] === startIdx)
+                );
+
+                if (isInner) {
+                    const dir = normalize([end[0] - start[0], end[1] - start[1]]);
+                    const perp = [-dir[1], dir[0]];
+                    const len = Math.sqrt((end[0]-start[0])**2 + (end[1]-start[1])**2);
+                    const bulgeOut = (layer === 'bottom') ? (pieceIdx % 2 === 0) : (pieceIdx % 2 === 1);
+                    drawHubEdge(shape, start, end, dir, perp, len, S, edgeType, bulgeOut);
+                } else {
+                    shape.lineTo(end[0], end[1]);
+                }
+            }
+            return shape;
+        }
+
+        // ============================================================
+        // KITE 2 - Kite Split: 3 wedges radiating from center
+        // All pieces meet at center point, each is uniquely shaped
+        // ============================================================
+        function buildKite2() {
+            const S = size;
+            const edgeType = kite2Style;
+            const slotHeight = height * 0.48;
+
+            // Kite geometry
+            const kiteHeight = S * 1.4;
+            const kiteWidth = S * 0.8;
+
+            // Vertices - center is at origin, all pieces meet here
+            const ctr = [0, 0];
+            const top = [0, kiteHeight * 0.5];
+            const left = [-kiteWidth / 2, kiteHeight * 0.1];
+            const right = [kiteWidth / 2, kiteHeight * 0.1];
+            const bottom = [0, -kiteHeight * 0.5];
+
+            // Three wedges from center - each unique shape
+            const piecesDef = [
+                // Piece A: Top wedge (tall isoceles-ish)
+                { points: [ctr, top, left], innerEdges: [[0, 1], [2, 0]] },
+                // Piece B: Left-bottom wedge (wide asymmetric)
+                { points: [ctr, left, bottom], innerEdges: [[0, 1], [2, 0]] },
+                // Piece C: Right wedge (combines right side)
+                { points: [ctr, bottom, right, top], innerEdges: [[0, 1], [3, 0]] }
+            ];
+
+            vis = [true, true, true];
+
+            for (let layer of ['bottom', 'top']) {
+                for (let i = 0; i < 3; i++) {
+                    const pDef = piecesDef[i];
+                    const shape2d = generateKite2Shape(i, pDef, S, edgeType, layer);
+
+                    const layerHeight = layer === 'bottom' ? slotHeight : height - slotHeight;
+                    const geo = new THREE.ExtrudeGeometry(shape2d, {
+                        depth: layerHeight,
+                        bevelEnabled: true,
+                        bevelThickness: 0.8,
+                        bevelSize: 0.5,
+                        bevelSegments: 2
+                    });
+
+                    const mat = new THREE.MeshStandardMaterial({
+                        color: cols3[i],
+                        roughness: 0.6,
+                        metalness: 0.05
+                    });
+
+                    const mesh = new THREE.Mesh(geo, mat);
+                    mesh.rotation.x = -Math.PI / 2;
+
+                    const edges = new THREE.LineSegments(
+                        new THREE.EdgesGeometry(geo, 30),
+                        new THREE.LineBasicMaterial({ color: 0x000000 })
+                    );
+                    edges.rotation.x = -Math.PI / 2;
+
+                    const g = new THREE.Group();
+                    g.add(mesh);
+                    g.add(edges);
+
+                    const baseY = layer === 'bottom' ? 0 : slotHeight;
+                    g.position.y = baseY;
+
+                    if (layer === 'bottom') {
+                        shards.push({ g, mat, layerOffset: baseY, pieceIdx: i });
+                        scene.add(g);
+                    } else {
+                        shards[i].g.add(mesh.clone());
+                        shards[i].g.add(edges.clone());
+                    }
+                }
+            }
+        }
+
+        function generateKite2Shape(pieceIdx, pDef, S, edgeType, layer) {
+            const shape = new THREE.Shape();
+            const points = pDef.points;
+            const innerEdges = pDef.innerEdges;
+
+            shape.moveTo(points[0][0], points[0][1]);
+
+            for (let e = 0; e < points.length; e++) {
+                const startIdx = e;
+                const endIdx = (e + 1) % points.length;
+                const start = points[startIdx];
+                const end = points[endIdx];
+
+                const isInner = innerEdges.some(ie =>
+                    (ie[0] === startIdx && ie[1] === endIdx) ||
+                    (ie[0] === endIdx && ie[1] === startIdx)
+                );
+
+                if (isInner) {
+                    const dir = normalize([end[0] - start[0], end[1] - start[1]]);
+                    const perp = [-dir[1], dir[0]];
+                    const len = Math.sqrt((end[0]-start[0])**2 + (end[1]-start[1])**2);
+                    const bulgeOut = (layer === 'bottom') ? (pieceIdx % 2 === 0) : (pieceIdx % 2 === 1);
+                    drawHubEdge(shape, start, end, dir, perp, len, S, edgeType, bulgeOut);
+                } else {
+                    shape.lineTo(end[0], end[1]);
+                }
+            }
+            return shape;
+        }
+
+        // ============================================================
+        // KITE 3 - Kite Thirds: Asymmetric division into 3 unique pieces
+        // Big piece, medium piece, small piece - all meet at center
+        // ============================================================
+        function buildKite3() {
+            const S = size;
+            const edgeType = kite3Style;
+            const slotHeight = height * 0.48;
+
+            // Kite geometry
+            const kiteHeight = S * 1.4;
+            const kiteWidth = S * 0.8;
+
+            // Center and vertices
+            const ctr = [0, 0];
+            const top = [0, kiteHeight * 0.5];
+            const left = [-kiteWidth / 2, kiteHeight * 0.1];
+            const right = [kiteWidth / 2, kiteHeight * 0.1];
+            const bottom = [0, -kiteHeight * 0.5];
+
+            // Three uniquely sized pieces
+            const piecesDef = [
+                // Piece A: Large piece (top and left combined) - biggest
+                { points: [ctr, top, left, bottom], innerEdges: [[0, 1], [3, 0]] },
+                // Piece B: Medium piece (right upper)
+                { points: [ctr, right, top], innerEdges: [[0, 1], [2, 0]] },
+                // Piece C: Small piece (right lower) - smallest
+                { points: [ctr, bottom, right], innerEdges: [[0, 1], [2, 0]] }
+            ];
+
+            vis = [true, true, true];
+
+            for (let layer of ['bottom', 'top']) {
+                for (let i = 0; i < 3; i++) {
+                    const pDef = piecesDef[i];
+                    const shape2d = generateKite3Shape(i, pDef, S, edgeType, layer);
+
+                    const layerHeight = layer === 'bottom' ? slotHeight : height - slotHeight;
+                    const geo = new THREE.ExtrudeGeometry(shape2d, {
+                        depth: layerHeight,
+                        bevelEnabled: true,
+                        bevelThickness: 0.8,
+                        bevelSize: 0.5,
+                        bevelSegments: 2
+                    });
+
+                    const mat = new THREE.MeshStandardMaterial({
+                        color: cols3[i],
+                        roughness: 0.6,
+                        metalness: 0.05
+                    });
+
+                    const mesh = new THREE.Mesh(geo, mat);
+                    mesh.rotation.x = -Math.PI / 2;
+
+                    const edges = new THREE.LineSegments(
+                        new THREE.EdgesGeometry(geo, 30),
+                        new THREE.LineBasicMaterial({ color: 0x000000 })
+                    );
+                    edges.rotation.x = -Math.PI / 2;
+
+                    const g = new THREE.Group();
+                    g.add(mesh);
+                    g.add(edges);
+
+                    const baseY = layer === 'bottom' ? 0 : slotHeight;
+                    g.position.y = baseY;
+
+                    if (layer === 'bottom') {
+                        shards.push({ g, mat, layerOffset: baseY, pieceIdx: i });
+                        scene.add(g);
+                    } else {
+                        shards[i].g.add(mesh.clone());
+                        shards[i].g.add(edges.clone());
+                    }
+                }
+            }
+        }
+
+        function generateKite3Shape(pieceIdx, pDef, S, edgeType, layer) {
+            const shape = new THREE.Shape();
+            const points = pDef.points;
+            const innerEdges = pDef.innerEdges;
+
+            shape.moveTo(points[0][0], points[0][1]);
+
+            for (let e = 0; e < points.length; e++) {
+                const startIdx = e;
+                const endIdx = (e + 1) % points.length;
+                const start = points[startIdx];
+                const end = points[endIdx];
+
+                const isInner = innerEdges.some(ie =>
+                    (ie[0] === startIdx && ie[1] === endIdx) ||
+                    (ie[0] === endIdx && ie[1] === startIdx)
+                );
+
+                if (isInner) {
+                    const dir = normalize([end[0] - start[0], end[1] - start[1]]);
+                    const perp = [-dir[1], dir[0]];
+                    const len = Math.sqrt((end[0]-start[0])**2 + (end[1]-start[1])**2);
+                    const bulgeOut = (layer === 'bottom') ? (pieceIdx % 2 === 0) : (pieceIdx % 2 === 1);
+                    drawHubEdge(shape, start, end, dir, perp, len, S, edgeType, bulgeOut);
+                } else {
+                    shape.lineTo(end[0], end[1]);
+                }
+            }
+            return shape;
+        }
+
+        // ============================================================
+        // KITE 4 - Kite Crystal: 4-way division with offset center
+        // Creates crystal-like facets, all meeting at shifted center
+        // ============================================================
+        function buildKite4() {
+            const S = size;
+            const edgeType = kite4Style;
+            const slotHeight = height * 0.48;
+
+            // Kite geometry
+            const kiteHeight = S * 1.4;
+            const kiteWidth = S * 0.8;
+
+            // Center offset slightly for more interesting geometry
+            const ctr = [kiteWidth * 0.05, kiteHeight * 0.05];
+            const top = [0, kiteHeight * 0.5];
+            const left = [-kiteWidth / 2, kiteHeight * 0.1];
+            const right = [kiteWidth / 2, kiteHeight * 0.1];
+            const bottom = [0, -kiteHeight * 0.5];
+
+            // Three pieces with varying shapes
+            const piecesDef = [
+                // Piece A: Tall narrow piece (top to bottom on left side)
+                { points: [ctr, top, left, bottom], innerEdges: [[0, 1], [3, 0]] },
+                // Piece B: Wide upper right piece
+                { points: [ctr, right, top], innerEdges: [[0, 1], [2, 0]] },
+                // Piece C: Lower right piece
+                { points: [ctr, bottom, right], innerEdges: [[0, 1], [2, 0]] }
+            ];
+
+            vis = [true, true, true];
+
+            for (let layer of ['bottom', 'top']) {
+                for (let i = 0; i < 3; i++) {
+                    const pDef = piecesDef[i];
+                    const shape2d = generateKite4Shape(i, pDef, S, edgeType, layer);
+
+                    const layerHeight = layer === 'bottom' ? slotHeight : height - slotHeight;
+                    const geo = new THREE.ExtrudeGeometry(shape2d, {
+                        depth: layerHeight,
+                        bevelEnabled: true,
+                        bevelThickness: 0.8,
+                        bevelSize: 0.5,
+                        bevelSegments: 2
+                    });
+
+                    const mat = new THREE.MeshStandardMaterial({
+                        color: cols3[i],
+                        roughness: 0.6,
+                        metalness: 0.05
+                    });
+
+                    const mesh = new THREE.Mesh(geo, mat);
+                    mesh.rotation.x = -Math.PI / 2;
+
+                    const edges = new THREE.LineSegments(
+                        new THREE.EdgesGeometry(geo, 30),
+                        new THREE.LineBasicMaterial({ color: 0x000000 })
+                    );
+                    edges.rotation.x = -Math.PI / 2;
+
+                    const g = new THREE.Group();
+                    g.add(mesh);
+                    g.add(edges);
+
+                    const baseY = layer === 'bottom' ? 0 : slotHeight;
+                    g.position.y = baseY;
+
+                    if (layer === 'bottom') {
+                        shards.push({ g, mat, layerOffset: baseY, pieceIdx: i });
+                        scene.add(g);
+                    } else {
+                        shards[i].g.add(mesh.clone());
+                        shards[i].g.add(edges.clone());
+                    }
+                }
+            }
+        }
+
+        function generateKite4Shape(pieceIdx, pDef, S, edgeType, layer) {
+            const shape = new THREE.Shape();
+            const points = pDef.points;
+            const innerEdges = pDef.innerEdges;
+
+            shape.moveTo(points[0][0], points[0][1]);
+
+            for (let e = 0; e < points.length; e++) {
+                const startIdx = e;
+                const endIdx = (e + 1) % points.length;
+                const start = points[startIdx];
+                const end = points[endIdx];
+
+                const isInner = innerEdges.some(ie =>
+                    (ie[0] === startIdx && ie[1] === endIdx) ||
+                    (ie[0] === endIdx && ie[1] === startIdx)
+                );
+
+                if (isInner) {
+                    const dir = normalize([end[0] - start[0], end[1] - start[1]]);
+                    const perp = [-dir[1], dir[0]];
+                    const len = Math.sqrt((end[0]-start[0])**2 + (end[1]-start[1])**2);
+                    const bulgeOut = (layer === 'bottom') ? (pieceIdx % 2 === 0) : (pieceIdx % 2 === 1);
+                    drawHubEdge(shape, start, end, dir, perp, len, S, edgeType, bulgeOut);
+                } else {
+                    shape.lineTo(end[0], end[1]);
+                }
+            }
+            return shape;
+        }
+
+        // ============================================================
+        // KITE 5 - Kite Bands: Horizontal chevron bands across the kite
+        // 3 stacked bands from bottom to top
+        // ============================================================
+        function buildKite5() {
+            const S = size;
+            const edgeType = kite5Style;
+            const slotHeight = height * 0.48;
+
+            // Kite geometry
+            const kiteHeight = S * 1.4;
+            const kiteWidth = S * 0.8;
+
+            // Kite vertices
+            const top = [0, kiteHeight * 0.5];
+            const left = [-kiteWidth / 2, kiteHeight * 0.1];
+            const right = [kiteWidth / 2, kiteHeight * 0.1];
+            const bottom = [0, -kiteHeight * 0.5];
+
+            // Band division points (horizontal cuts)
+            const band1Y = -kiteHeight * 0.15; // Lower band line
+            const band2Y = kiteHeight * 0.25;  // Upper band line
+
+            // Calculate x at each y level for left and right edges
+            const leftSlope = (top[1] - left[1]) / (top[0] - left[0]);
+            const rightSlope = (top[1] - right[1]) / (top[0] - right[0]);
+            const bottomLeftSlope = (left[1] - bottom[1]) / (left[0] - bottom[0]);
+            const bottomRightSlope = (right[1] - bottom[1]) / (right[0] - bottom[0]);
+
+            // Points on band lines
+            const b1Left = [bottom[0] + (band1Y - bottom[1]) / bottomLeftSlope, band1Y];
+            const b1Right = [bottom[0] + (band1Y - bottom[1]) / bottomRightSlope, band1Y];
+            const b2Left = [left[0] + (band2Y - left[1]) / leftSlope, band2Y];
+            const b2Right = [right[0] + (band2Y - right[1]) / rightSlope, band2Y];
+
+            // Three horizontal bands
+            const piecesDef = [
+                // Bottom band (pointed bottom)
+                { points: [bottom, b1Left, b1Right], innerEdges: [[1, 2]] },
+                // Middle band (hexagon-ish)
+                { points: [b1Left, left, b2Left, b2Right, right, b1Right], innerEdges: [[0, 5], [2, 3]] },
+                // Top band (pointed top)
+                { points: [b2Left, top, b2Right], innerEdges: [[0, 2]] }
+            ];
+
+            vis = [true, true, true];
+
+            for (let layer of ['bottom', 'top']) {
+                for (let i = 0; i < 3; i++) {
+                    const pDef = piecesDef[i];
+                    const shape2d = generateKite5Shape(i, pDef, S, edgeType, layer);
+
+                    const layerHeight = layer === 'bottom' ? slotHeight : height - slotHeight;
+                    const geo = new THREE.ExtrudeGeometry(shape2d, {
+                        depth: layerHeight,
+                        bevelEnabled: true,
+                        bevelThickness: 0.8,
+                        bevelSize: 0.5,
+                        bevelSegments: 2
+                    });
+
+                    const mat = new THREE.MeshStandardMaterial({
+                        color: cols3[i],
+                        roughness: 0.6,
+                        metalness: 0.05
+                    });
+
+                    const mesh = new THREE.Mesh(geo, mat);
+                    mesh.rotation.x = -Math.PI / 2;
+
+                    const edges = new THREE.LineSegments(
+                        new THREE.EdgesGeometry(geo, 30),
+                        new THREE.LineBasicMaterial({ color: 0x000000 })
+                    );
+                    edges.rotation.x = -Math.PI / 2;
+
+                    const g = new THREE.Group();
+                    g.add(mesh);
+                    g.add(edges);
+
+                    const baseY = layer === 'bottom' ? 0 : slotHeight;
+                    g.position.y = baseY;
+
+                    if (layer === 'bottom') {
+                        shards.push({ g, mat, layerOffset: baseY, pieceIdx: i });
+                        scene.add(g);
+                    } else {
+                        shards[i].g.add(mesh.clone());
+                        shards[i].g.add(edges.clone());
+                    }
+                }
+            }
+        }
+
+        function generateKite5Shape(pieceIdx, pDef, S, edgeType, layer) {
+            const shape = new THREE.Shape();
+            const points = pDef.points;
+            const innerEdges = pDef.innerEdges;
+
+            shape.moveTo(points[0][0], points[0][1]);
+
+            for (let e = 0; e < points.length; e++) {
+                const startIdx = e;
+                const endIdx = (e + 1) % points.length;
+                const start = points[startIdx];
+                const end = points[endIdx];
+
+                const isInner = innerEdges.some(ie =>
+                    (ie[0] === startIdx && ie[1] === endIdx) ||
+                    (ie[0] === endIdx && ie[1] === startIdx)
+                );
+
+                if (isInner) {
+                    const dir = normalize([end[0] - start[0], end[1] - start[1]]);
+                    const perp = [-dir[1], dir[0]];
+                    const len = Math.sqrt((end[0]-start[0])**2 + (end[1]-start[1])**2);
+                    const bulgeOut = (layer === 'bottom') ? (pieceIdx % 2 === 0) : (pieceIdx % 2 === 1);
+                    drawHubEdge(shape, start, end, dir, perp, len, S, edgeType, bulgeOut);
+                } else {
+                    shape.lineTo(end[0], end[1]);
+                }
+            }
+            return shape;
+        }
+
+        // ============================================================
+        // KITE 6 - Kite Frame: Inner kite + outer frame pieces
+        // Small kite in center, surrounded by frame segments
+        // ============================================================
+        function buildKite6() {
+            const S = size;
+            const edgeType = kite6Style;
+            const slotHeight = height * 0.48;
+
+            // Kite geometry
+            const kiteHeight = S * 1.4;
+            const kiteWidth = S * 0.8;
+
+            // Outer kite vertices
+            const top = [0, kiteHeight * 0.5];
+            const left = [-kiteWidth / 2, kiteHeight * 0.1];
+            const right = [kiteWidth / 2, kiteHeight * 0.1];
+            const bottom = [0, -kiteHeight * 0.5];
+
+            // Inner kite (scaled down, centered)
+            const scale = 0.4;
+            const ctrY = kiteHeight * 0.05; // Slightly offset center
+            const iTop = [0, top[1] * scale + ctrY];
+            const iLeft = [left[0] * scale, left[1] * scale + ctrY];
+            const iRight = [right[0] * scale, right[1] * scale + ctrY];
+            const iBottom = [0, bottom[1] * scale + ctrY];
+
+            // Three pieces: inner kite + two frame halves
+            const piecesDef = [
+                // Inner small kite
+                { points: [iTop, iLeft, iBottom, iRight], innerEdges: [[0, 1], [1, 2], [2, 3], [3, 0]] },
+                // Left frame piece
+                { points: [top, left, bottom, iBottom, iLeft, iTop], innerEdges: [[3, 4], [4, 5], [5, 0]] },
+                // Right frame piece
+                { points: [iTop, iRight, iBottom, bottom, right, top], innerEdges: [[0, 1], [1, 2], [5, 0]] }
+            ];
+
+            vis = [true, true, true];
+
+            for (let layer of ['bottom', 'top']) {
+                for (let i = 0; i < 3; i++) {
+                    const pDef = piecesDef[i];
+                    const shape2d = generateKite6Shape(i, pDef, S, edgeType, layer);
+
+                    const layerHeight = layer === 'bottom' ? slotHeight : height - slotHeight;
+                    const geo = new THREE.ExtrudeGeometry(shape2d, {
+                        depth: layerHeight,
+                        bevelEnabled: true,
+                        bevelThickness: 0.8,
+                        bevelSize: 0.5,
+                        bevelSegments: 2
+                    });
+
+                    const mat = new THREE.MeshStandardMaterial({
+                        color: cols3[i],
+                        roughness: 0.6,
+                        metalness: 0.05
+                    });
+
+                    const mesh = new THREE.Mesh(geo, mat);
+                    mesh.rotation.x = -Math.PI / 2;
+
+                    const edges = new THREE.LineSegments(
+                        new THREE.EdgesGeometry(geo, 30),
+                        new THREE.LineBasicMaterial({ color: 0x000000 })
+                    );
+                    edges.rotation.x = -Math.PI / 2;
+
+                    const g = new THREE.Group();
+                    g.add(mesh);
+                    g.add(edges);
+
+                    const baseY = layer === 'bottom' ? 0 : slotHeight;
+                    g.position.y = baseY;
+
+                    if (layer === 'bottom') {
+                        shards.push({ g, mat, layerOffset: baseY, pieceIdx: i });
+                        scene.add(g);
+                    } else {
+                        shards[i].g.add(mesh.clone());
+                        shards[i].g.add(edges.clone());
+                    }
+                }
+            }
+        }
+
+        function generateKite6Shape(pieceIdx, pDef, S, edgeType, layer) {
+            const shape = new THREE.Shape();
+            const points = pDef.points;
+            const innerEdges = pDef.innerEdges;
+
+            shape.moveTo(points[0][0], points[0][1]);
+
+            for (let e = 0; e < points.length; e++) {
+                const startIdx = e;
+                const endIdx = (e + 1) % points.length;
+                const start = points[startIdx];
+                const end = points[endIdx];
+
+                const isInner = innerEdges.some(ie =>
+                    (ie[0] === startIdx && ie[1] === endIdx) ||
+                    (ie[0] === endIdx && ie[1] === startIdx)
+                );
+
+                if (isInner) {
+                    const dir = normalize([end[0] - start[0], end[1] - start[1]]);
+                    const perp = [-dir[1], dir[0]];
+                    const len = Math.sqrt((end[0]-start[0])**2 + (end[1]-start[1])**2);
+                    const bulgeOut = (layer === 'bottom') ? (pieceIdx % 2 === 0) : (pieceIdx % 2 === 1);
+                    drawHubEdge(shape, start, end, dir, perp, len, S, edgeType, bulgeOut);
+                } else {
+                    shape.lineTo(end[0], end[1]);
+                }
+            }
+            return shape;
+        }
+
+        function triShape(idx) {
+            // Triangle with 5 different division styles
+            // OUTER EDGES = straight (form perfect triangle when merged)
+            // INNER EDGES = extend INTO neighbor's territory (overlapped when merged)
+
+            const S = size;
+            const h = S * Math.sqrt(3) / 2;
+            const cy = h / 3;
+
+            // Triangle vertices (centered on centroid)
+            const top = [0, h - cy];
+            const bl = [-S/2, -cy];
+            const br = [S/2, -cy];
+            const ctr = [0, 0];
+
+            const ext = S * 0.15; // Extension for overlapping
+
+            switch(triStyle) {
+                case 'classic':
+                    return triStyleClassic(idx, S, top, bl, br, ctr, ext);
+                case 'offset':
+                    return triStyleOffset(idx, S, top, bl, br, ctr, ext);
+                case 'layers':
+                    return triStyleLayers(idx, S, top, bl, br, ctr, ext);
+                case 'corners':
+                    return triStyleCorners(idx, S, top, bl, br, ctr, ext);
+                case 'unequal':
+                    return triStyleUnequal(idx, S, top, bl, br, ctr, ext);
+                default:
+                    return triStyleClassic(idx, S, top, bl, br, ctr, ext);
+            }
+        }
+
+        // CORE shapes (straight wedges - full height)
+        function triShapeCore(idx) {
+            const S = size;
+            const h = S * Math.sqrt(3) / 2;
+            const cy = h / 3;
+            const top = [0, h - cy];
+            const bl = [-S/2, -cy];
+            const br = [S/2, -cy];
+            const ctr = [0, 0];
+
+            const shape = new THREE.Shape();
+            if (idx === 0) {
+                shape.moveTo(ctr[0], ctr[1]);
+                shape.lineTo(top[0], top[1]);
+                shape.lineTo(bl[0], bl[1]);
+                shape.lineTo(ctr[0], ctr[1]);
+            } else if (idx === 1) {
+                shape.moveTo(ctr[0], ctr[1]);
+                shape.lineTo(bl[0], bl[1]);
+                shape.lineTo(br[0], br[1]);
+                shape.lineTo(ctr[0], ctr[1]);
+            } else {
+                shape.moveTo(ctr[0], ctr[1]);
+                shape.lineTo(br[0], br[1]);
+                shape.lineTo(top[0], top[1]);
+                shape.lineTo(ctr[0], ctr[1]);
+            }
+            return shape;
+        }
+
+        // EXTENSION shapes (curved bulges that slot under neighbors - shorter height)
+        function triShapeExtension(idx) {
+            const S = size;
+            const h = S * Math.sqrt(3) / 2;
+            const cy = h / 3;
+            const top = [0, h - cy];
+            const bl = [-S/2, -cy];
+            const br = [S/2, -cy];
+            const ctr = [0, 0];
+            const ext = S * 0.12;
+
+            const shape = new THREE.Shape();
+            if (idx === 0) {
+                // A's extension bulges toward C (right side)
+                const m1 = [(ctr[0] + top[0])/2, (ctr[1] + top[1])/2];
+                shape.moveTo(ctr[0], ctr[1]);
+                shape.lineTo(m1[0], m1[1]);
+                shape.quadraticCurveTo(m1[0] + ext * 1.5, m1[1], top[0], top[1]);
+                shape.lineTo(ctr[0], ctr[1]);
+            } else if (idx === 1) {
+                // B's extension bulges toward A and C (both inner edges)
+                const m1 = [(ctr[0] + bl[0])/2, (ctr[1] + bl[1])/2];
+                const m2 = [(br[0] + ctr[0])/2, (br[1] + ctr[1])/2];
+                shape.moveTo(ctr[0], ctr[1]);
+                shape.lineTo(m1[0], m1[1]);
+                shape.quadraticCurveTo(m1[0], m1[1] + ext * 1.5, bl[0], bl[1]);
+                shape.lineTo(br[0], br[1]);
+                shape.quadraticCurveTo(m2[0], m2[1] + ext, ctr[0], ctr[1]);
+            } else {
+                // C's extension bulges toward A and B
+                const m1 = [(ctr[0] + br[0])/2, (ctr[1] + br[1])/2];
+                const m2 = [(top[0] + ctr[0])/2, (top[1] + ctr[1])/2];
+                shape.moveTo(ctr[0], ctr[1]);
+                shape.lineTo(m1[0], m1[1]);
+                shape.quadraticCurveTo(m1[0] - ext * 1.5, m1[1], br[0], br[1]);
+                shape.lineTo(top[0], top[1]);
+                shape.quadraticCurveTo(m2[0] - ext * 1.5, m2[1], ctr[0], ctr[1]);
+            }
+            return shape;
+        }
+
+        // Style 1: Classic equal thirds from center
+        function triStyleClassic(idx, S, top, bl, br, ctr, ext) {
+            const shape = new THREE.Shape();
+
+            if (idx === 0) {
+                // A: Top-left wedge with curved inner edges
+                shape.moveTo(ctr[0], ctr[1]);
+                const m1 = [(ctr[0] + top[0])/2, (ctr[1] + top[1])/2];
+                shape.quadraticCurveTo(m1[0] + ext, m1[1], top[0], top[1]);
+                shape.lineTo(bl[0], bl[1]); // OUTER
+                const m2 = [(bl[0] + ctr[0])/2, (bl[1] + ctr[1])/2];
+                shape.quadraticCurveTo(m2[0], m2[1] - ext, ctr[0], ctr[1]);
+            } else if (idx === 1) {
+                // B: Bottom wedge
+                shape.moveTo(ctr[0], ctr[1]);
+                const m1 = [(ctr[0] + bl[0])/2, (ctr[1] + bl[1])/2];
+                shape.quadraticCurveTo(m1[0], m1[1] + ext, bl[0], bl[1]);
+                shape.lineTo(br[0], br[1]); // OUTER
+                const m2 = [(br[0] + ctr[0])/2, (br[1] + ctr[1])/2];
+                shape.quadraticCurveTo(m2[0], m2[1] + ext * 0.6, ctr[0], ctr[1]);
+            } else {
+                // C: Top-right wedge
+                shape.moveTo(ctr[0], ctr[1]);
+                const m1 = [(ctr[0] + br[0])/2, (ctr[1] + br[1])/2];
+                shape.quadraticCurveTo(m1[0] - ext, m1[1], br[0], br[1]);
+                shape.lineTo(top[0], top[1]); // OUTER
+                const m2 = [(top[0] + ctr[0])/2, (top[1] + ctr[1])/2];
+                shape.quadraticCurveTo(m2[0] - ext, m2[1], ctr[0], ctr[1]);
+            }
+            return shape;
+        }
+
+        // Style 2: Offset Center - wedges from an off-center point
+        function triStyleOffset(idx, S, top, bl, br, ctr, ext) {
+            const shape = new THREE.Shape();
+            // Move center point off to create naturally different sized wedges
+            const offCtr = [ctr[0] - S * 0.15, ctr[1] - S * 0.1];
+
+            if (idx === 0) {
+                // A: Larger piece (center shifted away from this side)
+                shape.moveTo(offCtr[0], offCtr[1]);
+                const m1 = [(offCtr[0] + top[0])/2, (offCtr[1] + top[1])/2];
+                shape.quadraticCurveTo(m1[0] + ext, m1[1], top[0], top[1]);
+                shape.lineTo(bl[0], bl[1]); // OUTER
+                const m2 = [(bl[0] + offCtr[0])/2, (bl[1] + offCtr[1])/2];
+                shape.quadraticCurveTo(m2[0], m2[1] - ext, offCtr[0], offCtr[1]);
+
+            } else if (idx === 1) {
+                // B: Medium piece
+                shape.moveTo(offCtr[0], offCtr[1]);
+                const m1 = [(offCtr[0] + bl[0])/2, (offCtr[1] + bl[1])/2];
+                shape.quadraticCurveTo(m1[0], m1[1] + ext, bl[0], bl[1]);
+                shape.lineTo(br[0], br[1]); // OUTER
+                const m2 = [(br[0] + offCtr[0])/2, (br[1] + offCtr[1])/2];
+                shape.quadraticCurveTo(m2[0], m2[1] + ext, offCtr[0], offCtr[1]);
+
+            } else {
+                // C: Smaller piece (center shifted toward this side)
+                shape.moveTo(offCtr[0], offCtr[1]);
+                const m1 = [(offCtr[0] + br[0])/2, (offCtr[1] + br[1])/2];
+                shape.quadraticCurveTo(m1[0] - ext, m1[1], br[0], br[1]);
+                shape.lineTo(top[0], top[1]); // OUTER
+                const m2 = [(top[0] + offCtr[0])/2, (top[1] + offCtr[1])/2];
+                shape.quadraticCurveTo(m2[0] - ext, m2[1], offCtr[0], offCtr[1]);
+            }
+            return shape;
+        }
+
+        // Style 3: Horizontal Layers - stacked bands
+        function triStyleLayers(idx, S, top, bl, br, ctr, ext) {
+            const shape = new THREE.Shape();
+            const h = S * Math.sqrt(3) / 2;
+
+            // Split triangle into 3 horizontal bands
+            const t1 = 0.3; // Top band ends here
+            const t2 = 0.65; // Middle band ends here
+
+            const leftAt = (t) => [bl[0] + (top[0] - bl[0]) * (1-t), bl[1] + (top[1] - bl[1]) * (1-t)];
+            const rightAt = (t) => [br[0] + (top[0] - br[0]) * (1-t), br[1] + (top[1] - br[1]) * (1-t)];
+
+            if (idx === 0) {
+                // A: Top apex - small triangle
+                const l1 = leftAt(t1);
+                const r1 = rightAt(t1);
+
+                shape.moveTo(top[0], top[1]);
+                shape.lineTo(l1[0], l1[1]); // OUTER: left partial
+                // Inner curved bottom
+                const m = [(l1[0] + r1[0])/2, l1[1]];
+                shape.quadraticCurveTo(m[0], m[1] - ext, r1[0], r1[1]);
+                shape.lineTo(top[0], top[1]); // OUTER: right partial
+
+            } else if (idx === 1) {
+                // B: Middle trapezoid band
+                const l1 = leftAt(t1);
+                const r1 = rightAt(t1);
+                const l2 = leftAt(t2);
+                const r2 = rightAt(t2);
+
+                shape.moveTo(l1[0], l1[1]);
+                shape.lineTo(l2[0], l2[1]); // OUTER: left partial
+                // Inner curved bottom
+                const m2 = [(l2[0] + r2[0])/2, l2[1]];
+                shape.quadraticCurveTo(m2[0], m2[1] - ext, r2[0], r2[1]);
+                shape.lineTo(r1[0], r1[1]); // OUTER: right partial
+                // Inner curved top
+                const m1 = [(r1[0] + l1[0])/2, r1[1]];
+                shape.quadraticCurveTo(m1[0], m1[1] + ext, l1[0], l1[1]);
+
+            } else {
+                // C: Bottom trapezoid - widest
+                const l2 = leftAt(t2);
+                const r2 = rightAt(t2);
+
+                shape.moveTo(l2[0], l2[1]);
+                shape.lineTo(bl[0], bl[1]); // OUTER: left partial
+                shape.lineTo(br[0], br[1]); // OUTER: bottom
+                shape.lineTo(r2[0], r2[1]); // OUTER: right partial
+                // Inner curved top
+                const m = [(r2[0] + l2[0])/2, r2[1]];
+                shape.quadraticCurveTo(m[0], m[1] + ext, l2[0], l2[1]);
+            }
+            return shape;
+        }
+
+        // Style 4: Corner Huggers - each owns a corner
+        function triStyleCorners(idx, S, top, bl, br, ctr, ext) {
+            const shape = new THREE.Shape();
+
+            // Each piece owns one corner and portions of 2 edges
+            const midTL = [(top[0] + bl[0])/2, (top[1] + bl[1])/2];
+            const midBL = [(bl[0] + br[0])/2, bl[1]];
+            const midTR = [(top[0] + br[0])/2, (top[1] + br[1])/2];
+
+            if (idx === 0) {
+                // A: Top corner
+                shape.moveTo(midTL[0], midTL[1]);
+                shape.lineTo(top[0], top[1]); // OUTER
+                shape.lineTo(midTR[0], midTR[1]); // OUTER
+                // Inner curved edges meeting at center
+                shape.quadraticCurveTo(ctr[0] + ext, ctr[1] + ext * 0.5, ctr[0], ctr[1]);
+                shape.quadraticCurveTo(ctr[0] - ext, ctr[1] + ext * 0.5, midTL[0], midTL[1]);
+
+            } else if (idx === 1) {
+                // B: Bottom-left corner
+                shape.moveTo(ctr[0], ctr[1]);
+                shape.quadraticCurveTo(midTL[0] + ext, midTL[1] - ext, midTL[0], midTL[1]);
+                shape.lineTo(bl[0], bl[1]); // OUTER
+                shape.lineTo(midBL[0], midBL[1]); // OUTER
+                shape.quadraticCurveTo(ctr[0] - ext * 0.5, ctr[1] - ext, ctr[0], ctr[1]);
+
+            } else {
+                // C: Bottom-right corner
+                shape.moveTo(ctr[0], ctr[1]);
+                shape.quadraticCurveTo(ctr[0] + ext * 0.5, ctr[1] - ext, midBL[0], midBL[1]);
+                shape.lineTo(br[0], br[1]); // OUTER
+                shape.lineTo(midTR[0], midTR[1]); // OUTER
+                shape.quadraticCurveTo(ctr[0] + ext, ctr[1], ctr[0], ctr[1]);
+            }
+            return shape;
+        }
+
+        // Style 5: Unequal Thirds - wedges with different angles
+        function triStyleUnequal(idx, S, top, bl, br, ctr, ext) {
+            const shape = new THREE.Shape();
+
+            // Split the triangle edges at different points to create unequal wedges
+            // A gets a thin slice, B gets a wide slice, C gets medium
+            const splitTL = [top[0] * 0.7 + bl[0] * 0.3, top[1] * 0.7 + bl[1] * 0.3]; // Point on top-left edge
+            const splitBR = [br[0] * 0.6 + top[0] * 0.4, br[1] * 0.6 + top[1] * 0.4]; // Point on right edge
+
+            if (idx === 0) {
+                // A: Thin top piece
+                shape.moveTo(ctr[0], ctr[1]);
+                const m1 = [(ctr[0] + top[0])/2, (ctr[1] + top[1])/2];
+                shape.quadraticCurveTo(m1[0] + ext * 0.5, m1[1], top[0], top[1]);
+                shape.lineTo(splitTL[0], splitTL[1]); // OUTER: partial top-left edge
+                const m2 = [(splitTL[0] + ctr[0])/2, (splitTL[1] + ctr[1])/2];
+                shape.quadraticCurveTo(m2[0] - ext, m2[1], ctr[0], ctr[1]);
+
+            } else if (idx === 1) {
+                // B: Wide bottom piece
+                shape.moveTo(ctr[0], ctr[1]);
+                const m1 = [(ctr[0] + splitTL[0])/2, (ctr[1] + splitTL[1])/2];
+                shape.quadraticCurveTo(m1[0] + ext, m1[1], splitTL[0], splitTL[1]);
+                shape.lineTo(bl[0], bl[1]); // OUTER: rest of left edge
+                shape.lineTo(br[0], br[1]); // OUTER: bottom edge
+                shape.lineTo(splitBR[0], splitBR[1]); // OUTER: partial right edge
+                const m2 = [(splitBR[0] + ctr[0])/2, (splitBR[1] + ctr[1])/2];
+                shape.quadraticCurveTo(m2[0], m2[1] - ext, ctr[0], ctr[1]);
+
+            } else {
+                // C: Medium right piece
+                shape.moveTo(ctr[0], ctr[1]);
+                const m1 = [(ctr[0] + splitBR[0])/2, (ctr[1] + splitBR[1])/2];
+                shape.quadraticCurveTo(m1[0], m1[1] + ext, splitBR[0], splitBR[1]);
+                shape.lineTo(top[0], top[1]); // OUTER: rest of right edge
+                const m2 = [(top[0] + ctr[0])/2, (top[1] + ctr[1])/2];
+                shape.quadraticCurveTo(m2[0] - ext * 0.5, m2[1], ctr[0], ctr[1]);
+            }
+            return shape;
+        }
+
+        function hexShape(idx) {
+            // Hexagon divided into 3 rhombus shapes
+            const S = size;
+            const ctr = [0, 0];
+
+            // Hex vertices (starting at right, going counter-clockwise)
+            const v = [];
+            for (let i = 0; i < 6; i++) {
+                const a = i * Math.PI / 3;
+                v.push([S * Math.cos(a), S * Math.sin(a)]);
+            }
+
+            const ext = S * 0.15;
+
+            switch(hexStyle) {
+                case 'classic':
+                    return hexStyleClassic(idx, S, v, ctr, ext);
+                case 'offset':
+                    return hexStyleOffset(idx, S, v, ctr, ext);
+                case 'layers':
+                    return hexStyleLayers(idx, S, v, ctr, ext);
+                case 'corners':
+                    return hexStyleCorners(idx, S, v, ctr, ext);
+                case 'unequal':
+                    return hexStyleUnequal(idx, S, v, ctr, ext);
+                default:
+                    return hexStyleClassic(idx, S, v, ctr, ext);
+            }
+        }
+
+        // CORE shape for hexagon (straight rhombus wedges)
+        function hexShapeCore(idx) {
+            const S = size;
+            const ctr = [0, 0];
+            const v = [];
+            for (let i = 0; i < 6; i++) {
+                const a = i * Math.PI / 3;
+                v.push([S * Math.cos(a), S * Math.sin(a)]);
+            }
+
+            const shape = new THREE.Shape();
+            const startV = idx * 2;
+            shape.moveTo(ctr[0], ctr[1]);
+            shape.lineTo(v[startV][0], v[startV][1]);
+            shape.lineTo(v[startV + 1][0], v[startV + 1][1]);
+            shape.lineTo(v[(startV + 2) % 6][0], v[(startV + 2) % 6][1]);
+            shape.lineTo(ctr[0], ctr[1]);
+            return shape;
+        }
+
+        // EXTENSION shape for hexagon (curved edges that slot under neighbors)
+        function hexShapeExtension(idx) {
+            const S = size;
+            const ctr = [0, 0];
+            const v = [];
+            for (let i = 0; i < 6; i++) {
+                const a = i * Math.PI / 3;
+                v.push([S * Math.cos(a), S * Math.sin(a)]);
+            }
+            const ext = S * 0.12;
+
+            const shape = new THREE.Shape();
+            const startV = idx * 2;
+            const endV = (startV + 2) % 6;
+
+            // Extension curves on inner edges
+            const m1 = [(ctr[0] + v[startV][0])/2, (ctr[1] + v[startV][1])/2];
+            const m2 = [(v[endV][0] + ctr[0])/2, (v[endV][1] + ctr[1])/2];
+
+            shape.moveTo(ctr[0], ctr[1]);
+            shape.lineTo(m1[0], m1[1]);
+            shape.quadraticCurveTo(m1[0] + ext, m1[1] - ext, v[startV][0], v[startV][1]);
+            shape.lineTo(v[endV][0], v[endV][1]);
+            shape.quadraticCurveTo(m2[0] - ext, m2[1] + ext, ctr[0], ctr[1]);
+
+            return shape;
+        }
+
+        // Hex Style 1: Classic rhombus thirds
+        function hexStyleClassic(idx, S, v, ctr, ext) {
+            const shape = new THREE.Shape();
+            const startV = idx * 2;
+
+            shape.moveTo(ctr[0], ctr[1]);
+            const m1 = [(ctr[0] + v[startV][0])/2, (ctr[1] + v[startV][1])/2];
+            shape.quadraticCurveTo(m1[0] + ext * 0.5, m1[1] - ext * 0.5, v[startV][0], v[startV][1]);
+            shape.lineTo(v[startV + 1][0], v[startV + 1][1]); // OUTER
+            shape.lineTo(v[(startV + 2) % 6][0], v[(startV + 2) % 6][1]); // OUTER
+            const m2 = [(v[(startV + 2) % 6][0] + ctr[0])/2, (v[(startV + 2) % 6][1] + ctr[1])/2];
+            shape.quadraticCurveTo(m2[0] - ext * 0.5, m2[1] + ext * 0.5, ctr[0], ctr[1]);
+
+            return shape;
+        }
+
+        // Hex Style 2: Offset center
+        function hexStyleOffset(idx, S, v, ctr, ext) {
+            const shape = new THREE.Shape();
+            const offCtr = [ctr[0] + S * 0.12, ctr[1] + S * 0.05];
+            const startV = idx * 2;
+
+            shape.moveTo(offCtr[0], offCtr[1]);
+            const m1 = [(offCtr[0] + v[startV][0])/2, (offCtr[1] + v[startV][1])/2];
+            shape.quadraticCurveTo(m1[0] + ext, m1[1], v[startV][0], v[startV][1]);
+            shape.lineTo(v[startV + 1][0], v[startV + 1][1]); // OUTER
+            shape.lineTo(v[(startV + 2) % 6][0], v[(startV + 2) % 6][1]); // OUTER
+            const m2 = [(v[(startV + 2) % 6][0] + offCtr[0])/2, (v[(startV + 2) % 6][1] + offCtr[1])/2];
+            shape.quadraticCurveTo(m2[0], m2[1] + ext, offCtr[0], offCtr[1]);
+
+            return shape;
+        }
+
+        // Hex Style 3: Concentric rings
+        function hexStyleLayers(idx, S, v, ctr, ext) {
+            const shape = new THREE.Shape();
+
+            if (idx === 0) {
+                // Inner small hexagon
+                const scale = 0.35;
+                shape.moveTo(v[0][0] * scale, v[0][1] * scale);
+                for (let i = 1; i < 6; i++) {
+                    shape.lineTo(v[i][0] * scale, v[i][1] * scale);
+                }
+                shape.lineTo(v[0][0] * scale, v[0][1] * scale);
+            } else if (idx === 1) {
+                // Middle ring
+                const inner = 0.35, outer = 0.7;
+                shape.moveTo(v[0][0] * inner, v[0][1] * inner);
+                for (let i = 0; i < 6; i++) {
+                    shape.lineTo(v[i][0] * outer, v[i][1] * outer);
+                    shape.lineTo(v[(i+1) % 6][0] * outer, v[(i+1) % 6][1] * outer);
+                    shape.lineTo(v[(i+1) % 6][0] * inner, v[(i+1) % 6][1] * inner);
+                }
+            } else {
+                // Outer ring
+                const inner = 0.7;
+                shape.moveTo(v[0][0] * inner, v[0][1] * inner);
+                for (let i = 0; i < 6; i++) {
+                    shape.lineTo(v[i][0], v[i][1]); // OUTER
+                    shape.lineTo(v[(i+1) % 6][0], v[(i+1) % 6][1]); // OUTER
+                    const m = [(v[(i+1) % 6][0] * inner + v[i][0] * inner) / 2, (v[(i+1) % 6][1] * inner + v[i][1] * inner) / 2];
+                    shape.quadraticCurveTo(m[0], m[1] + ext * 0.3, v[(i+1) % 6][0] * inner, v[(i+1) % 6][1] * inner);
+                }
+            }
+
+            return shape;
+        }
+
+        // Hex Style 4: Corner huggers
+        function hexStyleCorners(idx, S, v, ctr, ext) {
+            const shape = new THREE.Shape();
+            // Each piece owns 2 adjacent corners
+            const startV = idx * 2;
+            const midPrev = [(v[startV][0] + v[(startV + 5) % 6][0]) / 2, (v[startV][1] + v[(startV + 5) % 6][1]) / 2];
+            const midNext = [(v[(startV + 2) % 6][0] + v[(startV + 3) % 6][0]) / 2, (v[(startV + 2) % 6][1] + v[(startV + 3) % 6][1]) / 2];
+
+            shape.moveTo(midPrev[0], midPrev[1]);
+            shape.lineTo(v[startV][0], v[startV][1]); // OUTER
+            shape.lineTo(v[startV + 1][0], v[startV + 1][1]); // OUTER
+            shape.lineTo(v[(startV + 2) % 6][0], v[(startV + 2) % 6][1]); // OUTER
+            shape.lineTo(midNext[0], midNext[1]); // OUTER
+            shape.quadraticCurveTo(ctr[0], ctr[1] + ext * (idx === 1 ? -1 : 1), midPrev[0], midPrev[1]);
+
+            return shape;
+        }
+
+        // Hex Style 5: Unequal thirds
+        function hexStyleUnequal(idx, S, v, ctr, ext) {
+            const shape = new THREE.Shape();
+
+            if (idx === 0) {
+                // Small piece - just 1 edge
+                shape.moveTo(ctr[0], ctr[1]);
+                shape.quadraticCurveTo(ctr[0] + ext, ctr[1] - ext, v[0][0], v[0][1]);
+                shape.lineTo(v[1][0], v[1][1]); // OUTER
+                shape.quadraticCurveTo(ctr[0] - ext * 0.5, ctr[1] + ext * 0.5, ctr[0], ctr[1]);
+            } else if (idx === 1) {
+                // Large piece - 4 edges
+                shape.moveTo(ctr[0], ctr[1]);
+                shape.quadraticCurveTo(ctr[0] + ext * 0.5, ctr[1] - ext * 0.5, v[1][0], v[1][1]);
+                shape.lineTo(v[2][0], v[2][1]); // OUTER
+                shape.lineTo(v[3][0], v[3][1]); // OUTER
+                shape.lineTo(v[4][0], v[4][1]); // OUTER
+                shape.lineTo(v[5][0], v[5][1]); // OUTER
+                shape.quadraticCurveTo(ctr[0] - ext, ctr[1], ctr[0], ctr[1]);
+            } else {
+                // Medium piece - 1 edge
+                shape.moveTo(ctr[0], ctr[1]);
+                shape.quadraticCurveTo(ctr[0] + ext, ctr[1], v[5][0], v[5][1]);
+                shape.lineTo(v[0][0], v[0][1]); // OUTER
+                shape.quadraticCurveTo(ctr[0] - ext, ctr[1] + ext, ctr[0], ctr[1]);
+            }
+
+            return shape;
+        }
+
+        function pentShape(idx) {
+            // Pentagon divided into 3 pieces
+            const S = size;
+            const ctr = [0, 0];
+
+            // Pentagon vertices (5 points, starting at top)
+            const v = [];
+            for (let i = 0; i < 5; i++) {
+                const a = Math.PI/2 - i * 2 * Math.PI / 5;
+                v.push([S * Math.cos(a), S * Math.sin(a)]);
+            }
+
+            const ext = S * 0.12;
+
+            switch(pentStyle) {
+                case 'classic':
+                    return pentStyleClassic(idx, S, v, ctr, ext);
+                case 'offset':
+                    return pentStyleOffset(idx, S, v, ctr, ext);
+                case 'layers':
+                    return pentStyleLayers(idx, S, v, ctr, ext);
+                case 'corners':
+                    return pentStyleCorners(idx, S, v, ctr, ext);
+                case 'unequal':
+                    return pentStyleUnequal(idx, S, v, ctr, ext);
+                default:
+                    return pentStyleClassic(idx, S, v, ctr, ext);
+            }
+        }
+
+        // CORE shape for pentagon (straight wedges)
+        function pentShapeCore(idx) {
+            const S = size;
+            const ctr = [0, 0];
+            const v = [];
+            for (let i = 0; i < 5; i++) {
+                const a = Math.PI/2 - i * 2 * Math.PI / 5;
+                v.push([S * Math.cos(a), S * Math.sin(a)]);
+            }
+
+            const shape = new THREE.Shape();
+            if (idx === 0) {
+                // A: Top (edges 4-0, 0-1)
+                shape.moveTo(ctr[0], ctr[1]);
+                shape.lineTo(v[4][0], v[4][1]);
+                shape.lineTo(v[0][0], v[0][1]);
+                shape.lineTo(v[1][0], v[1][1]);
+                shape.lineTo(ctr[0], ctr[1]);
+            } else if (idx === 1) {
+                // B: Bottom-left (edges 1-2, 2-3)
+                shape.moveTo(ctr[0], ctr[1]);
+                shape.lineTo(v[1][0], v[1][1]);
+                shape.lineTo(v[2][0], v[2][1]);
+                shape.lineTo(v[3][0], v[3][1]);
+                shape.lineTo(ctr[0], ctr[1]);
+            } else {
+                // C: Bottom-right (edge 3-4)
+                shape.moveTo(ctr[0], ctr[1]);
+                shape.lineTo(v[3][0], v[3][1]);
+                shape.lineTo(v[4][0], v[4][1]);
+                shape.lineTo(ctr[0], ctr[1]);
+            }
+            return shape;
+        }
+
+        // EXTENSION shape for pentagon (curved edges that slot under neighbors)
+        function pentShapeExtension(idx) {
+            const S = size;
+            const ctr = [0, 0];
+            const v = [];
+            for (let i = 0; i < 5; i++) {
+                const a = Math.PI/2 - i * 2 * Math.PI / 5;
+                v.push([S * Math.cos(a), S * Math.sin(a)]);
+            }
+            const ext = S * 0.12;
+
+            const shape = new THREE.Shape();
+            if (idx === 0) {
+                // A's extensions on inner edges (toward C on left, toward B on right)
+                const m1 = [(ctr[0] + v[4][0])/2, (ctr[1] + v[4][1])/2];
+                const m2 = [(v[1][0] + ctr[0])/2, (v[1][1] + ctr[1])/2];
+                shape.moveTo(ctr[0], ctr[1]);
+                shape.lineTo(m1[0], m1[1]);
+                shape.quadraticCurveTo(m1[0] - ext * 1.5, m1[1], v[4][0], v[4][1]);
+                shape.lineTo(v[1][0], v[1][1]);
+                shape.quadraticCurveTo(m2[0] + ext * 1.5, m2[1], ctr[0], ctr[1]);
+            } else if (idx === 1) {
+                // B's extensions
+                const m1 = [(ctr[0] + v[1][0])/2, (ctr[1] + v[1][1])/2];
+                const m2 = [(v[3][0] + ctr[0])/2, (v[3][1] + ctr[1])/2];
+                shape.moveTo(ctr[0], ctr[1]);
+                shape.lineTo(m1[0], m1[1]);
+                shape.quadraticCurveTo(m1[0] - ext * 1.5, m1[1], v[1][0], v[1][1]);
+                shape.lineTo(v[3][0], v[3][1]);
+                shape.quadraticCurveTo(m2[0], m2[1] - ext * 1.5, ctr[0], ctr[1]);
+            } else {
+                // C's extensions
+                const m1 = [(ctr[0] + v[3][0])/2, (ctr[1] + v[3][1])/2];
+                const m2 = [(v[4][0] + ctr[0])/2, (v[4][1] + ctr[1])/2];
+                shape.moveTo(ctr[0], ctr[1]);
+                shape.lineTo(m1[0], m1[1]);
+                shape.quadraticCurveTo(m1[0], m1[1] + ext * 1.5, v[3][0], v[3][1]);
+                shape.lineTo(v[4][0], v[4][1]);
+                shape.quadraticCurveTo(m2[0] + ext * 1.5, m2[1], ctr[0], ctr[1]);
+            }
+            return shape;
+        }
+
+        // Pentagon Style 1: Classic - divide into 3 unequal pieces
+        function pentStyleClassic(idx, S, v, ctr, ext) {
+            const shape = new THREE.Shape();
+            // A: top (2 edges), B: bottom-left (2 edges), C: bottom-right (1 edge)
+
+            if (idx === 0) {
+                // A: Top piece - owns edges 0-1 and 4-0
+                shape.moveTo(ctr[0], ctr[1]);
+                const m1 = [(ctr[0] + v[4][0])/2, (ctr[1] + v[4][1])/2];
+                shape.quadraticCurveTo(m1[0] - ext, m1[1], v[4][0], v[4][1]);
+                shape.lineTo(v[0][0], v[0][1]); // OUTER
+                shape.lineTo(v[1][0], v[1][1]); // OUTER
+                const m2 = [(v[1][0] + ctr[0])/2, (v[1][1] + ctr[1])/2];
+                shape.quadraticCurveTo(m2[0] + ext, m2[1], ctr[0], ctr[1]);
+            } else if (idx === 1) {
+                // B: Bottom-left piece - owns edges 1-2 and 2-3
+                shape.moveTo(ctr[0], ctr[1]);
+                const m1 = [(ctr[0] + v[1][0])/2, (ctr[1] + v[1][1])/2];
+                shape.quadraticCurveTo(m1[0] - ext, m1[1], v[1][0], v[1][1]);
+                shape.lineTo(v[2][0], v[2][1]); // OUTER
+                shape.lineTo(v[3][0], v[3][1]); // OUTER
+                const m2 = [(v[3][0] + ctr[0])/2, (v[3][1] + ctr[1])/2];
+                shape.quadraticCurveTo(m2[0], m2[1] - ext, ctr[0], ctr[1]);
+            } else {
+                // C: Bottom-right piece - owns edge 3-4
+                shape.moveTo(ctr[0], ctr[1]);
+                const m1 = [(ctr[0] + v[3][0])/2, (ctr[1] + v[3][1])/2];
+                shape.quadraticCurveTo(m1[0], m1[1] + ext, v[3][0], v[3][1]);
+                shape.lineTo(v[4][0], v[4][1]); // OUTER
+                const m2 = [(v[4][0] + ctr[0])/2, (v[4][1] + ctr[1])/2];
+                shape.quadraticCurveTo(m2[0] + ext, m2[1], ctr[0], ctr[1]);
+            }
+
+            return shape;
+        }
+
+        // Pentagon Style 2: Offset center
+        function pentStyleOffset(idx, S, v, ctr, ext) {
+            const shape = new THREE.Shape();
+            const offCtr = [ctr[0] + S * 0.08, ctr[1] - S * 0.1];
+
+            if (idx === 0) {
+                shape.moveTo(offCtr[0], offCtr[1]);
+                shape.quadraticCurveTo(offCtr[0] - ext, offCtr[1], v[4][0], v[4][1]);
+                shape.lineTo(v[0][0], v[0][1]); // OUTER
+                shape.lineTo(v[1][0], v[1][1]); // OUTER
+                shape.quadraticCurveTo(offCtr[0] + ext, offCtr[1], offCtr[0], offCtr[1]);
+            } else if (idx === 1) {
+                shape.moveTo(offCtr[0], offCtr[1]);
+                shape.quadraticCurveTo(offCtr[0] - ext, offCtr[1], v[1][0], v[1][1]);
+                shape.lineTo(v[2][0], v[2][1]); // OUTER
+                shape.lineTo(v[3][0], v[3][1]); // OUTER
+                shape.quadraticCurveTo(offCtr[0], offCtr[1] - ext, offCtr[0], offCtr[1]);
+            } else {
+                shape.moveTo(offCtr[0], offCtr[1]);
+                shape.quadraticCurveTo(offCtr[0], offCtr[1] + ext, v[3][0], v[3][1]);
+                shape.lineTo(v[4][0], v[4][1]); // OUTER
+                shape.quadraticCurveTo(offCtr[0] + ext, offCtr[1], offCtr[0], offCtr[1]);
+            }
+
+            return shape;
+        }
+
+        // Pentagon Style 3: Horizontal layers
+        function pentStyleLayers(idx, S, v, ctr, ext) {
+            const shape = new THREE.Shape();
+
+            // Split pentagon horizontally into 3 bands
+            const y1 = v[0][1] * 0.4; // Top band boundary
+            const y2 = v[2][1] * 0.5; // Middle band boundary
+
+            if (idx === 0) {
+                // Top band - triangle at apex
+                const leftX = v[4][0] * 0.6;
+                const rightX = v[1][0] * 0.6;
+                shape.moveTo(v[0][0], v[0][1]);
+                shape.lineTo(leftX, y1);
+                shape.quadraticCurveTo(0, y1 - ext, rightX, y1);
+                shape.lineTo(v[0][0], v[0][1]);
+            } else if (idx === 1) {
+                // Middle band
+                const topLeftX = v[4][0] * 0.6;
+                const topRightX = v[1][0] * 0.6;
+                shape.moveTo(topLeftX, y1);
+                shape.lineTo(v[4][0], v[4][1]); // partial OUTER
+                shape.lineTo(v[1][0], v[1][1]); // partial OUTER
+                shape.lineTo(topRightX, y1);
+                shape.quadraticCurveTo(0, y1 + ext, topLeftX, y1);
+            } else {
+                // Bottom band
+                shape.moveTo(v[4][0], v[4][1]);
+                shape.lineTo(v[3][0], v[3][1]); // OUTER
+                shape.lineTo(v[2][0], v[2][1]); // OUTER
+                shape.lineTo(v[1][0], v[1][1]); // OUTER
+                shape.quadraticCurveTo(0, v[1][1] + ext, v[4][0], v[4][1]);
+            }
+
+            return shape;
+        }
+
+        // Pentagon Style 4: Corner huggers - like hexagon version
+        function pentStyleCorners(idx, S, v, ctr, ext) {
+            const shape = new THREE.Shape();
+
+            // Each robot hugs 1-2 corners
+            if (idx === 0) {
+                // Top corner
+                const midLeft = [(v[0][0] + v[4][0])/2, (v[0][1] + v[4][1])/2];
+                const midRight = [(v[0][0] + v[1][0])/2, (v[0][1] + v[1][1])/2];
+                shape.moveTo(midLeft[0], midLeft[1]);
+                shape.lineTo(v[0][0], v[0][1]); // OUTER
+                shape.lineTo(midRight[0], midRight[1]); // OUTER
+                shape.quadraticCurveTo(ctr[0], ctr[1] + ext, midLeft[0], midLeft[1]);
+            } else if (idx === 1) {
+                // Bottom-left corners (v1, v2, v3)
+                const midTop = [(v[0][0] + v[1][0])/2, (v[0][1] + v[1][1])/2];
+                const midBot = [(v[3][0] + v[4][0])/2, (v[3][1] + v[4][1])/2];
+                shape.moveTo(midTop[0], midTop[1]);
+                shape.lineTo(v[1][0], v[1][1]); // OUTER
+                shape.lineTo(v[2][0], v[2][1]); // OUTER
+                shape.lineTo(v[3][0], v[3][1]); // OUTER
+                shape.lineTo(midBot[0], midBot[1]); // OUTER
+                shape.quadraticCurveTo(ctr[0] - ext, ctr[1], midTop[0], midTop[1]);
+            } else {
+                // Bottom-right corner (v4)
+                const midTop = [(v[0][0] + v[4][0])/2, (v[0][1] + v[4][1])/2];
+                const midBot = [(v[3][0] + v[4][0])/2, (v[3][1] + v[4][1])/2];
+                shape.moveTo(midBot[0], midBot[1]);
+                shape.lineTo(v[4][0], v[4][1]); // OUTER
+                shape.lineTo(midTop[0], midTop[1]); // OUTER
+                shape.quadraticCurveTo(ctr[0] + ext, ctr[1], midBot[0], midBot[1]);
+            }
+
+            return shape;
+        }
+
+        // Pentagon Style 5: Unequal thirds
+        function pentStyleUnequal(idx, S, v, ctr, ext) {
+            const shape = new THREE.Shape();
+
+            if (idx === 0) {
+                // Tiny piece - just apex
+                const split1 = [v[0][0] * 0.6 + v[4][0] * 0.4, v[0][1] * 0.6 + v[4][1] * 0.4];
+                const split2 = [v[0][0] * 0.6 + v[1][0] * 0.4, v[0][1] * 0.6 + v[1][1] * 0.4];
+                shape.moveTo(ctr[0], ctr[1]);
+                shape.quadraticCurveTo(ctr[0] - ext, ctr[1] + ext, split1[0], split1[1]);
+                shape.lineTo(v[0][0], v[0][1]); // OUTER
+                shape.lineTo(split2[0], split2[1]); // OUTER
+                shape.quadraticCurveTo(ctr[0] + ext, ctr[1] + ext, ctr[0], ctr[1]);
+            } else if (idx === 1) {
+                // Large piece - most of pentagon
+                const split1 = [v[0][0] * 0.6 + v[4][0] * 0.4, v[0][1] * 0.6 + v[4][1] * 0.4];
+                const split2 = [v[0][0] * 0.6 + v[1][0] * 0.4, v[0][1] * 0.6 + v[1][1] * 0.4];
+                shape.moveTo(ctr[0], ctr[1]);
+                shape.quadraticCurveTo(ctr[0] - ext, ctr[1] - ext, split2[0], split2[1]);
+                shape.lineTo(v[1][0], v[1][1]); // OUTER
+                shape.lineTo(v[2][0], v[2][1]); // OUTER
+                shape.lineTo(v[3][0], v[3][1]); // OUTER
+                shape.lineTo(v[4][0], v[4][1]); // OUTER
+                shape.lineTo(split1[0], split1[1]); // OUTER
+                shape.quadraticCurveTo(ctr[0] + ext, ctr[1] - ext, ctr[0], ctr[1]);
+            } else {
+                // Hidden/small - overlaps with others
+                shape.moveTo(ctr[0], ctr[1]);
+                shape.quadraticCurveTo(ctr[0], ctr[1] + ext * 0.5, ctr[0] - ext, ctr[1]);
+                shape.quadraticCurveTo(ctr[0], ctr[1] - ext * 0.5, ctr[0], ctr[1]);
+            }
+
+            return shape;
+        }
+
+        function normalize(v) {
+            const len = Math.sqrt(v[0]*v[0] + v[1]*v[1]);
+            return len > 0 ? [v[0]/len, v[1]/len] : [0, 0];
+        }
+
+        function updatePos() {
+            const dist = size * 0.8;
+
+            shards.forEach((s, i) => {
+                let dx = 0, dz = 0;
+
+                if (view === 'apart') {
+                    if (shape === 'tri' || shape === 'triProg') {
+                        const angles = [Math.PI * 2/3, 0, -Math.PI * 2/3];
+                        dx = Math.cos(angles[i]) * dist * animT;
+                        dz = Math.sin(angles[i]) * dist * animT;
+                    } else if (shape === 'triHub') {
+                        // 4 pieces: 3 corners move outward, hub stays center (slightly down)
+                        if (i < 3) {
+                            // Corners A, B, C move toward their respective triangle vertices
+                            const angles = [Math.PI/2, Math.PI/2 - 2*Math.PI/3, Math.PI/2 + 2*Math.PI/3];
+                            dx = Math.cos(angles[i]) * dist * animT;
+                            dz = Math.sin(angles[i]) * dist * animT;
+                        } else {
+                            // Hub stays in center but drops down slightly
+                            dz = -dist * 0.3 * animT;
+                        }
+                    } else if (shape === 'pent' || shape === 'pentProg') {
+                        // 3 directions for pentagon (120 degrees apart)
+                        const angles = [Math.PI/2, Math.PI/2 - 2*Math.PI/3, Math.PI/2 + 2*Math.PI/3];
+                        dx = Math.cos(angles[i]) * dist * animT;
+                        dz = Math.sin(angles[i]) * dist * animT;
+                    } else if (shape === 'kite' || shape === 'kite2' || shape === 'kite3' || shape === 'kite4' || shape === 'kite5' || shape === 'kite6') {
+                        // Kite variations: 3 pieces radiate from center
+                        if (i === 0) { dz = -dist * animT; } // top piece up
+                        else if (i === 1) { dx = -dist * 0.7 * animT; dz = dist * 0.5 * animT; } // bottom-left
+                        else { dx = dist * 0.7 * animT; dz = dist * 0.5 * animT; } // bottom-right
+                    } else if (shape === 'diamond' || shape === 'hourglass') {
+                        // Vertical stack: top up, middle stays, bottom down
+                        if (i === 0) { dz = -dist * animT; } // top
+                        else if (i === 1) { } // middle stays
+                        else { dz = dist * animT; } // bottom
+                    } else if (shape === 'arrow') {
+                        // Arrow: head up, tail pieces go down-left and down-right
+                        if (i === 0) { dz = -dist * animT; } // arrowhead up
+                        else if (i === 1) { dx = -dist * 0.5 * animT; dz = dist * 0.5 * animT; } // left tail
+                        else { dx = dist * 0.5 * animT; dz = dist * 0.5 * animT; } // right tail
+                    } else {
+                        const angles = [Math.PI/6, Math.PI/6 + 2*Math.PI/3, Math.PI/6 - 2*Math.PI/3];
+                        dx = Math.cos(angles[i]) * dist * animT;
+                        dz = Math.sin(angles[i]) * dist * animT;
+                    }
+                }
+
+                // Preserve layer offset (Y) for proper overlapping
+                s.g.position.set(dx, s.layerOffset, dz);
+                s.g.visible = vis[i] !== undefined ? vis[i] : true;
+            });
+        }
+
+        function populateDesignDropdown() {
+            const select = document.getElementById('designSelect');
+            select.innerHTML = allDesigns.map(d =>
+                `<option value="${d.value}" ${d.value === currentDesign ? 'selected' : ''}>${d.label}</option>`
+            ).join('');
+        }
+
+        window.setDesign = d => {
+            currentDesign = d;
+            const [newShape, newStyle] = d.split(':');
+            shape = newShape;
+
+            // Update the appropriate style variable
+            if (newShape === 'tri') triStyle = newStyle;
+            else if (newShape === 'triProg') triProgStyle = newStyle;
+            else if (newShape === 'triHub') triHubStyle = newStyle;
+            else if (newShape === 'pent') pentStyle = newStyle;
+            else if (newShape === 'pentProg') pentProgStyle = newStyle;
+            else if (newShape === 'hex') hexStyle = newStyle;
+            else if (newShape === 'hexProg') hexProgStyle = newStyle;
+            else if (newShape === 'kite') kiteStyle = newStyle;
+            else if (newShape === 'diamond') diamondStyle = newStyle;
+            else if (newShape === 'arrow') arrowStyle = newStyle;
+            else if (newShape === 'hourglass') hourglassStyle = newStyle;
+            else if (newShape === 'kite2') kite2Style = newStyle;
+            else if (newShape === 'kite3') kite3Style = newStyle;
+            else if (newShape === 'kite4') kite4Style = newStyle;
+            else if (newShape === 'kite5') kite5Style = newStyle;
+            else if (newShape === 'kite6') kite6Style = newStyle;
+
+            build();
+        };
+
+        window.setView = m => {
+            view = m;
+            document.getElementById('vMerge').classList.toggle('on', m === 'merge');
+            document.getElementById('vApart').classList.toggle('on', m === 'apart');
+        };
+
+        window.cam = v => {
+            document.querySelectorAll('#camTop,#camFront').forEach(b => b.classList.remove('on'));
+
+            if (v === 'top') {
+                camera.position.set(0, 100, 0);
+                camera.lookAt(0, 0, 0);
+                document.getElementById('camTop').classList.add('on');
+            } else if (v === 'front') {
+                camera.position.set(0, 30, 100);
+                camera.lookAt(0, 5, 0);
+                document.getElementById('camFront').classList.add('on');
+            }
+            controls.target.set(0, 5, 0);
+        };
+
+        window.tog = i => {
+            vis[i] = !vis[i];
+            document.getElementById('t' + i).classList.toggle('on', vis[i]);
+            updatePos();
+        };
+
+        window.exp = w => {
+            const exporter = new STLExporter();
+            let obj;
+            if (w === 'all') {
+                obj = new THREE.Group();
+                shards.forEach(s => obj.add(s.g.clone(true)));
+            } else {
+                obj = shards[w].g.clone(true);
+                obj.position.set(0, 0, 0);
+            }
+            const stl = exporter.parse(obj, { binary: false });
+            const blob = new Blob([stl], { type: 'model/stl' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = w === 'all' ? 'shards.stl' : `shard_${['a','b','c'][w]}.stl`;
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const target = view === 'apart' ? 1 : 0;
+            animT += (target - animT) * 0.1;
+            if (Math.abs(target - animT) > 0.001) updatePos();
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>
