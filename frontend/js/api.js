@@ -2,7 +2,10 @@
  * API client for the Shape Splitting Workbench backend.
  */
 
-const API_BASE = 'http://localhost:8000';
+// Use environment-based API URL: production backend or localhost for dev
+const API_BASE = window.location.hostname === 'localhost'
+    ? 'http://localhost:8000'
+    : 'https://endless-forms-backend.onrender.com';
 
 export const API = {
     /**
