@@ -1,26 +1,13 @@
 {
-  "builds": [
-    {
-      "src": "api/*.py",
-      "use": "@vercel/python"
+  "functions": {
+    "api/*.py": {
+      "runtime": "@vercel/python@4.3.1"
     }
-  ],
-  "routes": [
-    {
-      "src": "/api/shapes",
-      "dest": "/api/shapes.py"
-    },
-    {
-      "src": "/api/generate",
-      "dest": "/api/generate.py"
-    },
-    {
-      "src": "/api/splitters",
-      "dest": "/api/splitters.py"
-    },
-    {
-      "src": "/api/split",
-      "dest": "/api/split.py"
-    }
+  },
+  "rewrites": [
+    { "source": "/api/shapes", "destination": "/api/shapes" },
+    { "source": "/api/generate", "destination": "/api/generate" },
+    { "source": "/api/splitters", "destination": "/api/splitters" },
+    { "source": "/api/split", "destination": "/api/split" }
   ]
 }
