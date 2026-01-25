@@ -2,8 +2,10 @@
  * API client for the Shape Splitting Workbench backend.
  */
 
-// Use relative /api/ routes for Vercel serverless functions
-const API_BASE = '/api';
+// Use localhost for local dev, /api/ for Vercel production
+const API_BASE = window.location.hostname === 'localhost'
+    ? 'http://localhost:8000'
+    : '/api';
 
 export const API = {
     /**
@@ -23,7 +25,7 @@ export const API = {
      * @returns {Promise<Object>} Generated mesh data
      */
     async generateShape(type, params = {}) {
-        const response = await fetch(`${API_BASE}/generate`, {
+        const response = await fetch(`${API_BASE}/shapes/generate`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ shape_type: type, params }),
