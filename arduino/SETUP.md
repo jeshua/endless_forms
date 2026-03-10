@@ -1,124 +1,117 @@
-# ESP32 Pressure-Reactive LED Strip - Setup Guide
+# Pressure-Reactive LED Ring - Setup Guide
 
-## 1. Install Arduino IDE
+## Hardware
 
-Download from: https://www.arduino.cc/en/software
+- **Microcontroller:** Seeed Studio XIAO ESP32-C3
+- **LEDs:** WS2812B 7-LED Ring (or any WS2812B strip)
+- **Sensor:** FSR (Force Sensitive Resistor)
+- **Level Shifter:** 3.3V to 5V logic level converter (required for reliable LED communication)
+- **Resistor:** 10K ohm pull-down for FSR voltage divider
+- **Power:** 3.7V LiPo battery or USB
 
-Or install via Homebrew:
-```bash
-brew install --cask arduino-ide
+## Wiring
+
+### LED Ring
+```
+LED Ring VCC    →  5V power rail
+LED Ring GND    →  Ground rail
+LED Ring DIN    →  Level Shifter HV1 output
+
+Level Shifter:
+  LV            →  3.3V from XIAO
+  HV            →  5V power rail
+  GND           →  Ground (both sides)
+  LV1           →  D1 on XIAO
+  HV1           →  LED Ring DIN
 ```
 
-## 2. Add ESP32 Board Support
+### FSR Pressure Sensor
+```
+FSR Leg 1       →  3.3V (3V3 pin on XIAO)
+FSR Leg 2       →  Breadboard row (e.g., Row 20)
 
-1. Open Arduino IDE
-2. Go to **Arduino IDE > Settings** (Mac) or **File > Preferences** (Windows)
-3. In "Additional boards manager URLs", add:
-   ```
-   https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
-   ```
-4. Click OK
-5. Go to **Tools > Board > Boards Manager**
-6. Search for "esp32"
-7. Install **"esp32 by Espressif Systems"** (latest version)
+In same row:
+  10K resistor  →  other end to GND
+  Wire          →  D0 on XIAO
+```
 
-## 3. Install FastLED Library
+### Critical: Shared Ground
+The XIAO and LED ring MUST share a common ground connection. If powered separately (USB + battery), connect XIAO GND directly to LED GND.
 
-1. Go to **Sketch > Include Library > Manage Libraries**
-2. Search for "FastLED"
-3. Install **"FastLED by Daniel Garcia"**
+## Pin Reference (XIAO ESP32-C3)
 
-## 4. Configure Board Settings
+| Component  | XIAO Pin | GPIO | Notes |
+|------------|----------|------|-------|
+| FSR Signal | D0       | GPIO2 | Analog input |
+| LED Data   | D1       | GPIO3 | Through level shifter |
+| 3.3V Out   | 3V3      | -    | Power for FSR + level shifter LV |
+| Ground     | GND      | -    | Common ground |
 
-1. Connect your ESP32 via USB-C
-2. Go to **Tools > Board** and select **"ESP32 Dev Module"**
-3. Go to **Tools > Port** and select the USB port (usually `/dev/cu.usbserial-*` on Mac)
+## Software Setup
 
-If no port appears:
-- On Mac: Install CH340/CP210x drivers (most ESP32 boards use these)
-- Try a different USB cable (some are charge-only)
-- Try a different USB port
+### Option 1: Arduino CLI (Recommended)
 
-## 5. Test Sequence
-
-Run these sketches in order:
-
-### Step 1: LED Test (verify strip works)
-1. Open `led_test/led_test.ino`
-2. **IMPORTANT**: Change `NUM_LEDS` to match your strip length
-3. Click Upload (→ button)
-4. You should see a rainbow animation
-
-### Step 2: FSR Test (verify sensor works)
-1. Open `fsr_test/fsr_test.ino`
-2. Upload to ESP32
-3. Open **Tools > Serial Monitor** (set baud rate to 115200)
-4. Press the FSR and watch values change
-5. Note the min/max values for calibration
-
-### Step 3: Full Project
-1. Open `pressure_reactive_leds/pressure_reactive_leds.ino`
-2. Update these values based on your FSR test:
-   - `NUM_LEDS` - your strip length
-   - `PRESSURE_MIN` - value when lightly pressed
-   - `PRESSURE_MAX` - value when pressed hard
-3. Upload and enjoy!
-
-## Troubleshooting
-
-### "No port available"
-- Install USB-Serial drivers:
-  - CH340: https://www.wch.cn/downloads/CH341SER_MAC_ZIP.html
-  - CP210x: https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers
-- Try: `ls /dev/cu.*` in Terminal to see available ports
-
-### Upload fails / times out
-- Hold BOOT button on ESP32 while uploading
-- Try lower upload speed: **Tools > Upload Speed > 115200**
-
-### LEDs don't light up
-- Check capacitor polarity (long leg = positive)
-- Verify 330Ω resistor is on data line
-- Confirm LED strip VCC wire goes to 5V, not 3.3V
-- Try GPIO 2 instead of GPIO 4
-
-### FSR reads 0 or 4095 constantly
-- Check 10KΩ pull-down resistor connection
-- Verify FSR legs are in separate breadboard rows
-- Try GPIO 35 or 36 (other ADC pins)
-
-### Colors are wrong (RGB order)
-- Change `GRB` to `RGB` or `BRG` in the code
-
-## Pin Reference (ESP32-C3)
-
-| Component | ESP32-C3 Pin | Notes |
-|-----------|--------------|-------|
-| FSR Signal | GPIO 2 | Analog input (ADC1, pins 0-5) |
-| LED Data | GPIO 4 | Through 330Ω resistor |
-| VIN | Battery + | Via toggle switch |
-| GND | Battery - | Common ground |
-
-**Note:** Your board is an ESP32-C3. GPIO 34 from the original instructions doesn't exist on the C3. Use GPIO 2 instead for the FSR sensor.
-
-## Arduino CLI (Optional)
-
-For command-line programming:
 ```bash
 # Install
 brew install arduino-cli
 
-# Setup
-arduino-cli config init
+# Setup ESP32 support
 arduino-cli core update-index
 arduino-cli core install esp32:esp32
 
-# Install library
+# Install FastLED library
 arduino-cli lib install "FastLED"
 
 # Compile
-arduino-cli compile --fqbn esp32:esp32:esp32 pressure_reactive_leds
+arduino-cli compile --fqbn esp32:esp32:XIAO_ESP32C3 led_test
 
-# Upload (replace PORT with your port)
-arduino-cli upload -p /dev/cu.usbserial-0001 --fqbn esp32:esp32:esp32 pressure_reactive_leds
+# Upload (check your port with: ls /dev/cu.usb*)
+arduino-cli upload -p /dev/cu.usbmodem1101 --fqbn esp32:esp32:XIAO_ESP32C3 led_test
 ```
+
+### Option 2: Arduino IDE
+
+1. Download from: https://www.arduino.cc/en/software
+2. Add ESP32 board URL in Settings:
+   ```
+   https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+   ```
+3. Install "esp32 by Espressif Systems" in Boards Manager
+4. Install "FastLED" in Library Manager
+5. Select board: **XIAO_ESP32C3**
+6. Select port: `/dev/cu.usbmodem*`
+
+## Project Files
+
+| File | Description |
+|------|-------------|
+| `led_test/led_test.ino` | Main project - FSR controls LED brightness (orange) |
+| `fsr_test/fsr_test.ino` | Test FSR sensor readings via Serial Monitor |
+| `pressure_reactive_leds/pressure_reactive_leds.ino` | Alternative with color shifting |
+
+## Troubleshooting
+
+### LEDs don't light up
+1. **Check level shifter** - 3.3V logic often doesn't work directly with 5V LEDs
+2. **Check ground** - XIAO and LEDs must share common ground
+3. **Check direction** - LED strip has input/output ends (look for arrows)
+4. **Try different GPIO** - Some pins may have conflicts
+
+### LEDs show random colors
+- Usually means no data signal reaching LEDs
+- Check level shifter wiring
+- Verify shared ground connection
+
+### FSR reads constant 0 or 4095
+- Check 10K pull-down resistor connection
+- Verify FSR legs are in separate breadboard rows
+- Check D0 connection
+
+### LEDs flicker at low pressure
+- Increase `THRESHOLD` value in code (default: 50)
+- Check for loose connections
+
+### Upload fails
+- Check USB cable (some are charge-only)
+- Try: `ls /dev/cu.*` to find correct port
+- Hold BOOT button during upload if needed
