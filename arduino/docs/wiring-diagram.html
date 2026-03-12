@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puppet LED Wiring Diagram</title>
+    <style>
+        body {
+            font-family: 'Monaco', 'Courier New', monospace;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+        h1, h2 {
+            color: #4CAF50;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: 60px repeat(8, 60px);
+            gap: 2px;
+            margin: 30px 0;
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .cell {
+            padding: 12px 8px;
+            text-align: center;
+            font-size: 11px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            background: #333;
+        }
+        .header {
+            background: #1a472a;
+            color: #4CAF50;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        .row-label {
+            background: #1a472a;
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .bus-5v {
+            background: #8B0000;
+            color: white;
+            font-weight: bold;
+        }
+        .bus-gnd {
+            background: #000;
+            color: white;
+            font-weight: bold;
+            border: 2px solid #666;
+        }
+        .xiao-top {
+            background: #1565C0;
+            color: white;
+            font-weight: bold;
+        }
+        .xiao-bottom {
+            background: #0D47A1;
+            color: white;
+            font-weight: bold;
+        }
+        .xiao-body {
+            background: linear-gradient(135deg, #1565C0, #0D47A1);
+            color: white;
+            opacity: 0.5;
+        }
+        .resistor {
+            background: #D84315;
+            color: white;
+        }
+        .pad {
+            background: #558B2F;
+            color: white;
+            font-weight: bold;
+        }
+        .empty {
+            background: #2a2a2a;
+            border: 1px dashed #444;
+        }
+        .battery {
+            background: #6A1B9A;
+            color: white;
+            font-weight: bold;
+        }
+        .power-flow {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #4CAF50;
+        }
+        .flow-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: #333;
+            border-radius: 4px;
+        }
+        .arrow {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .legend-box {
+            width: 40px;
+            height: 30px;
+            border-radius: 4px;
+        }
+        code {
+            background: #333;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎭 Pressure-Reactive LED Puppet - Wiring Diagram</h1>
+
+    <h2>Legend</h2>
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-box bus-5v"></div>
+            <span>5V Power Bus</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-box bus-gnd"></div>
+            <span>GND Bus</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-box xiao-top"></div>
+            <span>XIAO Top Pins</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-box xiao-bottom"></div>
+            <span>XIAO Bottom Pins</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-box resistor"></div>
+            <span>10K Resistor</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-box pad"></div>
+            <span>External Pads</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-box battery"></div>
+            <span>Battery Input</span>
+        </div>
+    </div>
+
+    <h2>Perfboard Layout (Front View)</h2>
+    <div class="board">
+        <div class="cell header">Row</div>
+        <div class="cell header">A</div>
+        <div class="cell header">B</div>
+        <div class="cell header">C</div>
+        <div class="cell header">D</div>
+        <div class="cell header">E</div>
+        <div class="cell header">F</div>
+        <div class="cell header">G</div>
+        <div class="cell header">H</div>
+
+        <div class="cell row-label">1</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell battery">BAT+<br/>via SW</div>
+
+        <div class="cell row-label">2</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell battery">BAT-</div>
+
+        <div class="cell row-label">3-5</div>
+        <div class="cell empty" style="grid-column: span 8;">Empty rows</div>
+
+        <div class="cell row-label">6</div>
+        <div class="cell bus-5v">5V</div>
+        <div class="cell bus-5v">5V</div>
+        <div class="cell bus-5v">5V</div>
+        <div class="cell bus-5v">5V</div>
+        <div class="cell bus-5v">5V</div>
+        <div class="cell bus-5v">5V</div>
+        <div class="cell bus-5v">5V</div>
+        <div class="cell bus-5v">5V</div>
+
+        <div class="cell row-label">7</div>
+        <div class="cell bus-gnd">GND</div>
+        <div class="cell bus-gnd">GND</div>
+        <div class="cell bus-gnd">GND</div>
+        <div class="cell bus-gnd">GND</div>
+        <div class="cell bus-gnd">GND</div>
+        <div class="cell bus-gnd">GND</div>
+        <div class="cell bus-gnd">GND</div>
+        <div class="cell bus-gnd">GND</div>
+
+        <div class="cell row-label">8</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+
+        <div class="cell row-label">9</div>
+        <div class="cell xiao-top">5V</div>
+        <div class="cell xiao-top">GND</div>
+        <div class="cell xiao-top">3V3</div>
+        <div class="cell xiao-top">D10</div>
+        <div class="cell xiao-top">D9</div>
+        <div class="cell xiao-top">D8</div>
+        <div class="cell xiao-top">D7</div>
+        <div class="cell empty">-</div>
+
+        <div class="cell row-label">10-14</div>
+        <div class="cell xiao-body" style="grid-column: span 7;">XIAO ESP32-C3 chip body</div>
+        <div class="cell empty">-</div>
+
+        <div class="cell row-label">15</div>
+        <div class="cell xiao-bottom">D0</div>
+        <div class="cell xiao-bottom">D1</div>
+        <div class="cell xiao-bottom">D2</div>
+        <div class="cell xiao-bottom">D3</div>
+        <div class="cell xiao-bottom">D4</div>
+        <div class="cell xiao-bottom">D5</div>
+        <div class="cell xiao-bottom">D6</div>
+        <div class="cell empty">-</div>
+
+        <div class="cell row-label">16</div>
+        <div class="cell resistor">10K<br/>leg 1</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+
+        <div class="cell row-label">17</div>
+        <div class="cell resistor">10K<br/>leg 2</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+
+        <div class="cell row-label">18-19</div>
+        <div class="cell empty" style="grid-column: span 8;">Empty rows</div>
+
+        <div class="cell row-label">20</div>
+        <div class="cell pad">FSR+<br/>3V3</div>
+        <div class="cell pad">FSR-<br/>signal</div>
+        <div class="cell pad">LED<br/>5V</div>
+        <div class="cell pad">LED<br/>GND</div>
+        <div class="cell pad">LED<br/>DIN</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+    </div>
+
+    <h2>Power Flow</h2>
+    <div class="power-flow">
+        <div class="flow-item">
+            <strong style="color: #8B0000;">Battery +</strong>
+            <span class="arrow">→</span> Switch
+            <span class="arrow">→</span> <code>1H</code>
+            <span class="arrow">→</span> <code>6H</code> (5V Bus)
+            <span class="arrow">→</span> Splits:
+            <ul style="margin: 10px 0 0 20px;">
+                <li><code>6A → 9A</code> (XIAO 5V power)</li>
+                <li><code>6C → 20C</code> (LED ring 5V)</li>
+            </ul>
+        </div>
+
+        <div class="flow-item">
+            <strong style="color: #000; background: #666; padding: 2px 6px; border-radius: 3px;">Battery -</strong>
+            <span class="arrow">→</span> <code>2H</code>
+            <span class="arrow">→</span> <code>7H</code> (GND Bus)
+            <span class="arrow">→</span> Splits:
+            <ul style="margin: 10px 0 0 20px;">
+                <li><code>7B → 9B</code> (XIAO GND)</li>
+                <li><code>7A → 17A</code> (10K resistor to GND)</li>
+                <li><code>7D → 20D</code> (LED ring GND)</li>
+            </ul>
+        </div>
+
+        <div class="flow-item">
+            <strong style="color: #1565C0;">XIAO 3V3 Output</strong>
+            <span class="arrow">→</span> <code>9C → 20A</code> (FSR power)
+        </div>
+    </div>
+
+    <h2>Signal Connections</h2>
+    <div class="power-flow">
+        <div class="flow-item">
+            <strong>FSR Sensor (Voltage Divider):</strong>
+            <ul style="margin: 10px 0 0 20px;">
+                <li>FSR + wire <span class="arrow">→</span> <code>20A</code> pad (3.3V from <code>9C</code>)</li>
+                <li>FSR - wire <span class="arrow">→</span> <code>20B</code> pad <span class="arrow">→</span> <code>16A</code> junction</li>
+                <li>Junction <code>16A</code> connects:
+                    <ul style="margin: 5px 0 0 20px;">
+                        <li><code>15A (D0)</code> reads voltage</li>
+                        <li><code>17A</code> (10K to GND)</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <div class="flow-item">
+            <strong>LED Ring:</strong>
+            <ul style="margin: 10px 0 0 20px;">
+                <li>LED 5V wire <span class="arrow">→</span> <code>20C</code> pad (from 5V bus)</li>
+                <li>LED GND wire <span class="arrow">→</span> <code>20D</code> pad (from GND bus)</li>
+                <li>LED DIN wire <span class="arrow">→</span> <code>20E</code> pad <span class="arrow">→</span> <code>15B (D1)</code></li>
+            </ul>
+        </div>
+    </div>
+
+    <h2>Critical Traces (Back of Board)</h2>
+    <div class="power-flow">
+        <div class="flow-item">
+            <strong>Power Buses (horizontal wires):</strong>
+            <ul style="margin: 10px 0 0 20px;">
+                <li><code>6A-6H</code>: 5V bus (solder wire across all holes)</li>
+                <li><code>7A-7H</code>: GND bus (solder wire across all holes)</li>
+            </ul>
+        </div>
+
+        <div class="flow-item">
+            <strong>Bus to XIAO connections:</strong>
+            <ul style="margin: 10px 0 0 20px;">
+                <li><code>6A → 9A</code>: 5V bus to XIAO (crosses over row 7 GND bus)</li>
+                <li><code>7B → 9B</code>: GND bus to XIAO (direct 2-row trace)</li>
+            </ul>
+        </div>
+
+        <div class="flow-item">
+            <strong>Component connections:</strong>
+            <ul style="margin: 10px 0 0 20px;">
+                <li><code>15A → 16A</code>: D0 to FSR junction (1 row)</li>
+                <li><code>17A → 7A</code>: 10K resistor to GND bus</li>
+                <li><code>9C → 20A</code>: 3V3 to FSR+ pad</li>
+                <li><code>15B → 20E</code>: D1 to LED DIN pad</li>
+                <li><code>6C → 20C</code>: 5V bus to LED 5V pad</li>
+                <li><code>7D → 20D</code>: GND bus to LED GND pad</li>
+                <li><code>1H → 6H</code>: Battery+ to 5V bus</li>
+                <li><code>2H → 7H</code>: Battery- to GND bus</li>
+            </ul>
+        </div>
+    </div>
+
+</body>
+</html>
