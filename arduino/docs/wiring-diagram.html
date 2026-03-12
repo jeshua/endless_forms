@@ -20,7 +20,7 @@
         }
         .board {
             display: grid;
-            grid-template-columns: 60px repeat(8, 60px);
+            grid-template-columns: 60px repeat(10, 55px);
             gap: 2px;
             margin: 30px 0;
             background: #2a2a2a;
@@ -91,6 +91,12 @@
             color: white;
             font-weight: bold;
         }
+        .switch {
+            background: #FF6F00;
+            color: white;
+            font-weight: bold;
+            border: 2px solid #E65100;
+        }
         .power-flow {
             background: #2a2a2a;
             padding: 20px;
@@ -139,7 +145,7 @@
     <div class="legend">
         <div class="legend-item">
             <div class="legend-box bus-5v"></div>
-            <span>5V Power Bus</span>
+            <span>Battery Bus (~4V)</span>
         </div>
         <div class="legend-item">
             <div class="legend-box bus-gnd"></div>
@@ -165,6 +171,10 @@
             <div class="legend-box battery"></div>
             <span>Battery Input</span>
         </div>
+        <div class="legend-item">
+            <div class="legend-box switch"></div>
+            <span>Power Switch</span>
+        </div>
     </div>
 
     <h2>Perfboard Layout (Front View)</h2>
@@ -178,6 +188,8 @@
         <div class="cell header">F</div>
         <div class="cell header">G</div>
         <div class="cell header">H</div>
+        <div class="cell header">I</div>
+        <div class="cell header">J</div>
 
         <div class="cell row-label">1</div>
         <div class="cell empty">-</div>
@@ -187,7 +199,9 @@
         <div class="cell empty">-</div>
         <div class="cell empty">-</div>
         <div class="cell empty">-</div>
-        <div class="cell battery">BAT+<br/>via SW</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell switch">SW1</div>
 
         <div class="cell row-label">2</div>
         <div class="cell empty">-</div>
@@ -195,22 +209,38 @@
         <div class="cell empty">-</div>
         <div class="cell empty">-</div>
         <div class="cell empty">-</div>
+        <div class="cell battery">BAT+</div>
         <div class="cell empty">-</div>
         <div class="cell empty">-</div>
-        <div class="cell battery">BAT-</div>
+        <div class="cell empty">-</div>
+        <div class="cell switch">COM</div>
 
-        <div class="cell row-label">3-5</div>
-        <div class="cell empty" style="grid-column: span 8;">Empty rows</div>
+        <div class="cell row-label">3</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell switch">SW3</div>
+
+        <div class="cell row-label">4-5</div>
+        <div class="cell empty" style="grid-column: span 10;">Empty rows</div>
 
         <div class="cell row-label">6</div>
-        <div class="cell bus-5v">5V</div>
-        <div class="cell bus-5v">5V</div>
-        <div class="cell bus-5v">5V</div>
-        <div class="cell bus-5v">5V</div>
-        <div class="cell bus-5v">5V</div>
-        <div class="cell bus-5v">5V</div>
-        <div class="cell bus-5v">5V</div>
-        <div class="cell bus-5v">5V</div>
+        <div class="cell bus-5v">4V</div>
+        <div class="cell bus-5v">4V</div>
+        <div class="cell bus-5v">4V</div>
+        <div class="cell bus-5v">4V</div>
+        <div class="cell bus-5v">4V</div>
+        <div class="cell bus-5v">4V</div>
+        <div class="cell bus-5v">4V</div>
+        <div class="cell bus-5v">4V</div>
+        <div class="cell bus-5v">4V</div>
+        <div class="cell bus-5v">4V</div>
 
         <div class="cell row-label">7</div>
         <div class="cell bus-gnd">GND</div>
@@ -221,8 +251,12 @@
         <div class="cell bus-gnd">GND</div>
         <div class="cell bus-gnd">GND</div>
         <div class="cell bus-gnd">GND</div>
+        <div class="cell bus-gnd">GND</div>
+        <div class="cell battery">BAT-</div>
 
         <div class="cell row-label">8</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
         <div class="cell empty">-</div>
         <div class="cell empty">-</div>
         <div class="cell empty">-</div>
@@ -241,10 +275,12 @@
         <div class="cell xiao-top">D8</div>
         <div class="cell xiao-top">D7</div>
         <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
 
         <div class="cell row-label">10-14</div>
         <div class="cell xiao-body" style="grid-column: span 7;">XIAO ESP32-C3 chip body</div>
-        <div class="cell empty">-</div>
+        <div class="cell empty" style="grid-column: span 3;">-</div>
 
         <div class="cell row-label">15</div>
         <div class="cell xiao-bottom">D0</div>
@@ -255,9 +291,13 @@
         <div class="cell xiao-bottom">D5</div>
         <div class="cell xiao-bottom">D6</div>
         <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
 
         <div class="cell row-label">16</div>
-        <div class="cell resistor">10K<br/>leg 1</div>
+        <div class="cell resistor">JCT</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
         <div class="cell empty">-</div>
         <div class="cell empty">-</div>
         <div class="cell empty">-</div>
@@ -267,7 +307,9 @@
         <div class="cell empty">-</div>
 
         <div class="cell row-label">17</div>
-        <div class="cell resistor">10K<br/>leg 2</div>
+        <div class="cell resistor">10K</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
         <div class="cell empty">-</div>
         <div class="cell empty">-</div>
         <div class="cell empty">-</div>
@@ -277,48 +319,50 @@
         <div class="cell empty">-</div>
 
         <div class="cell row-label">18-19</div>
-        <div class="cell empty" style="grid-column: span 8;">Empty rows</div>
+        <div class="cell empty" style="grid-column: span 10;">Empty rows</div>
 
         <div class="cell row-label">20</div>
         <div class="cell pad">FSR+<br/>3V3</div>
-        <div class="cell pad">FSR-<br/>signal</div>
+        <div class="cell pad">FSR-</div>
         <div class="cell empty">-</div>
         <div class="cell empty">-</div>
-        <div class="cell pad">LED<br/>DIN</div>
-        <div class="cell pad">LED<br/>GND</div>
-        <div class="cell pad">LED<br/>5V</div>
+        <div class="cell pad">DIN</div>
+        <div class="cell pad">GND</div>
+        <div class="cell pad">4V</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
         <div class="cell empty">-</div>
     </div>
 
     <h2>Power Flow</h2>
     <div class="power-flow">
         <div class="flow-item">
-            <strong style="color: #8B0000;">Battery +</strong>
-            <span class="arrow">→</span> Switch
-            <span class="arrow">→</span> <code>1H</code>
-            <span class="arrow">→</span> <code>6H</code> (5V Bus)
+            <strong style="color: #8B0000;">Battery + (3.7V LiPo, ~4V charged)</strong>
+            <span class="arrow">→</span> <code>F2</code> pad
+            <span class="arrow">→</span> <code>J2</code> (Switch COM)
+            <span class="arrow">→</span> <code>J3</code> (Switch OUT)
+            <span class="arrow">→</span> <code>6J</code> (Battery Bus ~4V)
             <span class="arrow">→</span> Splits:
             <ul style="margin: 10px 0 0 20px;">
-                <li><code>6A → 9A</code> (XIAO 5V power)</li>
-                <li><code>6C → 20C</code> (LED ring 5V)</li>
+                <li><code>6A → 9A</code> (XIAO power input)</li>
+                <li><code>6G → 20G</code> (LED ring 4V power)</li>
             </ul>
         </div>
 
         <div class="flow-item">
             <strong style="color: #000; background: #666; padding: 2px 6px; border-radius: 3px;">Battery -</strong>
-            <span class="arrow">→</span> <code>2H</code>
-            <span class="arrow">→</span> <code>7H</code> (GND Bus)
+            <span class="arrow">→</span> <code>J7</code> (directly on GND Bus)
             <span class="arrow">→</span> Splits:
             <ul style="margin: 10px 0 0 20px;">
                 <li><code>7B → 9B</code> (XIAO GND)</li>
                 <li><code>7A → 17A</code> (10K resistor to GND)</li>
-                <li><code>7D → 20D</code> (LED ring GND)</li>
+                <li><code>7F → 20F</code> (LED ring GND)</li>
             </ul>
         </div>
 
         <div class="flow-item">
-            <strong style="color: #1565C0;">XIAO 3V3 Output</strong>
-            <span class="arrow">→</span> <code>9C → 20A</code> (FSR power)
+            <strong style="color: #1565C0;">XIAO 3V3 Output (regulated from ~4V input)</strong>
+            <span class="arrow">→</span> <code>9C → 20A</code> (FSR power, 3.3V)
         </div>
     </div>
 
@@ -341,9 +385,9 @@
         <div class="flow-item">
             <strong>LED Ring:</strong>
             <ul style="margin: 10px 0 0 20px;">
-                <li>LED 5V wire <span class="arrow">→</span> <code>20C</code> pad (from 5V bus)</li>
-                <li>LED GND wire <span class="arrow">→</span> <code>20D</code> pad (from GND bus)</li>
                 <li>LED DIN wire <span class="arrow">→</span> <code>20E</code> pad <span class="arrow">→</span> <code>15B (D1)</code></li>
+                <li>LED GND wire <span class="arrow">→</span> <code>20F</code> pad (from GND bus)</li>
+                <li>LED 4V wire <span class="arrow">→</span> <code>20G</code> pad (from battery bus)</li>
             </ul>
         </div>
     </div>
@@ -351,38 +395,46 @@
     <h2>Critical Traces (Back of Board)</h2>
     <div class="power-flow">
         <div class="flow-item">
-            <strong>Power Buses (horizontal wires):</strong>
+            <strong>Power Buses (horizontal wires across A-J):</strong>
             <ul style="margin: 10px 0 0 20px;">
-                <li><code>6A-6H</code>: 5V bus (solder wire across all holes)</li>
-                <li><code>7A-7H</code>: GND bus (solder wire across all holes)</li>
+                <li><code>6A-6J</code>: Battery bus ~4V (solid wire across all 10 columns)</li>
+                <li><code>7A-7J</code>: GND bus (solid wire across all 10 columns)</li>
+            </ul>
+        </div>
+
+        <div class="flow-item">
+            <strong>Power Switch connections:</strong>
+            <ul style="margin: 10px 0 0 20px;">
+                <li><code>F2 → J2</code>: Battery+ pad to switch COM pin ✓</li>
+                <li><code>J3 → 6J</code>: Switch OUT pin to battery bus ✓</li>
+                <li><code>J7</code>: Battery- wire directly on GND bus ✓</li>
             </ul>
         </div>
 
         <div class="flow-item">
             <strong>Bus to XIAO connections:</strong>
             <ul style="margin: 10px 0 0 20px;">
-                <li><code>6A → 9A</code>: 5V bus to XIAO (crosses over row 7 GND bus)</li>
-                <li><code>7B → 9B</code>: GND bus to XIAO (direct 2-row trace)</li>
+                <li><code>6A → 9A</code>: Battery bus to XIAO power</li>
+                <li><code>7B → 9B</code>: GND bus to XIAO ground</li>
             </ul>
         </div>
 
         <div class="flow-item">
             <strong>Component connections:</strong>
             <ul style="margin: 10px 0 0 20px;">
-                <li><code>15A → 16A</code>: D0 to FSR junction (1 row)</li>
+                <li><code>16A → 15A</code>: Junction to D0 (FSR reading)</li>
                 <li><code>17A → 7A</code>: 10K resistor to GND bus</li>
                 <li><code>9C → 20A</code>: 3V3 to FSR+ pad</li>
+                <li><code>20B → 16A</code>: FSR- pad to junction</li>
                 <li><code>15B → 20E</code>: D1 to LED DIN pad</li>
-                <li><code>6C → 20C</code>: 5V bus to LED 5V pad</li>
-                <li><code>7D → 20D</code>: GND bus to LED GND pad</li>
-                <li><code>1H → 6H</code>: Battery+ to 5V bus</li>
-                <li><code>2H → 7H</code>: Battery- to GND bus</li>
+                <li><code>6G → 20G</code>: Battery bus to LED 4V pad</li>
+                <li><code>7F → 20F</code>: GND bus to LED GND pad</li>
             </ul>
         </div>
     </div>
 
     <h2>Back View - Traces (Solder Side)</h2>
-    <p style="color: #888; margin-bottom: 20px;">This shows the wires/traces on the BACK of the perfboard that connect everything together</p>
+    <p style="color: #888; margin-bottom: 20px;">This shows traces on the BACK of the perfboard. Your actual layout with switch at J1-J3.</p>
 
     <div class="board">
         <div class="cell header">Row</div>
@@ -394,6 +446,8 @@
         <div class="cell header">F</div>
         <div class="cell header">G</div>
         <div class="cell header">H</div>
+        <div class="cell header">I</div>
+        <div class="cell header">J</div>
 
         <div class="cell row-label">1</div>
         <div class="cell empty">-</div>
@@ -403,11 +457,9 @@
         <div class="cell empty">-</div>
         <div class="cell empty">-</div>
         <div class="cell empty">-</div>
-        <div class="cell battery">BAT+</div>
-
-        <div class="cell row-label">↓</div>
-        <div class="cell empty" style="grid-column: span 7;">trace wire</div>
-        <div class="cell" style="background: #8B0000; color: white;">│</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell switch">SW1</div>
 
         <div class="cell row-label">2</div>
         <div class="cell empty">-</div>
@@ -415,13 +467,27 @@
         <div class="cell empty">-</div>
         <div class="cell empty">-</div>
         <div class="cell empty">-</div>
+        <div class="cell battery">BAT+</div>
+        <div class="cell" style="background: #8B0000; color: white;">━━</div>
+        <div class="cell" style="background: #8B0000; color: white;">━━</div>
+        <div class="cell" style="background: #8B0000; color: white;">━━</div>
+        <div class="cell switch">COM</div>
+
+        <div class="cell row-label">3</div>
         <div class="cell empty">-</div>
         <div class="cell empty">-</div>
-        <div class="cell battery">BAT-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell switch">SW3</div>
 
         <div class="cell row-label">↓</div>
-        <div class="cell empty" style="grid-column: span 7;">trace wire</div>
-        <div class="cell" style="background: #000; color: white; border: 2px solid #666;">│</div>
+        <div class="cell empty" style="grid-column: span 9;">-</div>
+        <div class="cell" style="background: #8B0000; color: white;">│</div>
 
         <div class="cell row-label">6</div>
         <div class="cell bus-5v">═</div>
@@ -432,16 +498,8 @@
         <div class="cell bus-5v">═</div>
         <div class="cell bus-5v">═</div>
         <div class="cell bus-5v">═</div>
-
-        <div class="cell row-label">↓</div>
-        <div class="cell" style="background: #8B0000; color: white;">│</div>
-        <div class="cell empty">-</div>
-        <div class="cell" style="background: #8B0000; color: white;">│</div>
-        <div class="cell empty">-</div>
-        <div class="cell empty">-</div>
-        <div class="cell empty">-</div>
-        <div class="cell" style="background: #8B0000; color: white;">│</div>
-        <div class="cell empty">-</div>
+        <div class="cell bus-5v">═</div>
+        <div class="cell bus-5v">═</div>
 
         <div class="cell row-label">7</div>
         <div class="cell bus-gnd">═</div>
@@ -452,37 +510,30 @@
         <div class="cell bus-gnd">═</div>
         <div class="cell bus-gnd">═</div>
         <div class="cell bus-gnd">═</div>
+        <div class="cell bus-gnd">═</div>
+        <div class="cell battery">BAT-</div>
 
-        <div class="cell row-label">↓</div>
-        <div class="cell" style="background: #000; color: white; border: 2px solid #666;">│</div>
-        <div class="cell" style="background: #000; color: white; border: 2px solid #666;">│</div>
-        <div class="cell empty">-</div>
-        <div class="cell empty">-</div>
-        <div class="cell empty">-</div>
-        <div class="cell" style="background: #000; color: white; border: 2px solid #666;">│</div>
-        <div class="cell empty">-</div>
-        <div class="cell empty">-</div>
+        <div class="cell row-label">8</div>
+        <div class="cell empty" style="grid-column: span 10;">-</div>
 
         <div class="cell row-label">9</div>
         <div class="cell xiao-top">5V<br/>↑</div>
         <div class="cell xiao-top">GND<br/>↑</div>
-        <div class="cell xiao-top" style="border: 3px solid orange;">3V3<br/>↓</div>
+        <div class="cell xiao-top">3V3<br/>↓</div>
         <div class="cell xiao-top">-</div>
         <div class="cell xiao-top">-</div>
         <div class="cell xiao-top">-</div>
         <div class="cell xiao-top">-</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
         <div class="cell empty">-</div>
 
-        <div class="cell row-label">↓</div>
-        <div class="cell empty">-</div>
-        <div class="cell empty">-</div>
-        <div class="cell" style="background: #FF6F00; color: white; font-weight: bold;">│<br/>3V3<br/>↓</div>
-        <div class="cell empty">-</div>
-        <div class="cell" style="background: #0D47A1; color: white;">│<br/>D1<br/>↓</div>
-        <div class="cell empty" style="grid-column: span 3;">XIAO chip body</div>
+        <div class="cell row-label">10-14</div>
+        <div class="cell xiao-body" style="grid-column: span 7;">XIAO chip body</div>
+        <div class="cell empty" style="grid-column: span 3;">-</div>
 
         <div class="cell row-label">15</div>
-        <div class="cell xiao-bottom">D0<br/>↓</div>
+        <div class="cell xiao-bottom">D0</div>
         <div class="cell xiao-bottom">D1<br/>↓</div>
         <div class="cell xiao-bottom">-</div>
         <div class="cell xiao-bottom">-</div>
@@ -490,111 +541,72 @@
         <div class="cell xiao-bottom">-</div>
         <div class="cell xiao-bottom">-</div>
         <div class="cell empty">-</div>
-
-        <div class="cell row-label">↓</div>
-        <div class="cell" style="background: #0D47A1; color: white;">│<br/>D0</div>
         <div class="cell empty">-</div>
-        <div class="cell" style="background: #FF6F00; color: white;">│<br/>3V3</div>
         <div class="cell empty">-</div>
-        <div class="cell" style="background: #0D47A1; color: white;">│<br/>D1</div>
-        <div class="cell empty" style="grid-column: span 3;">-</div>
 
         <div class="cell row-label">16</div>
-        <div class="cell resistor" style="border: 3px solid yellow;">FSR<br/>JUNCT<br/>↓</div>
-        <div class="cell empty">-</div>
-        <div class="cell" style="background: #FF6F00; color: white;">│</div>
-        <div class="cell empty">-</div>
-        <div class="cell" style="background: #0D47A1; color: white;">│</div>
-        <div class="cell empty" style="grid-column: span 3;">-</div>
-
-        <div class="cell row-label">↓</div>
-        <div class="cell" style="background: #D84315; color: white;">│<br/>10K</div>
-        <div class="cell" style="background: yellow; color: black; font-weight: bold;">←FSR-</div>
-        <div class="cell" style="background: #FF6F00; color: white;">│</div>
-        <div class="cell empty">-</div>
-        <div class="cell" style="background: #0D47A1; color: white;">│</div>
-        <div class="cell empty" style="grid-column: span 3;">-</div>
+        <div class="cell resistor">JCT</div>
+        <div class="cell empty" style="grid-column: span 9;">-</div>
 
         <div class="cell row-label">17</div>
-        <div class="cell resistor">↓<br/>GND</div>
-        <div class="cell empty">-</div>
-        <div class="cell" style="background: #FF6F00; color: white;">│</div>
-        <div class="cell empty">-</div>
-        <div class="cell" style="background: #0D47A1; color: white;">│</div>
-        <div class="cell empty" style="grid-column: span 3;">-</div>
+        <div class="cell resistor">10K</div>
+        <div class="cell empty" style="grid-column: span 9;">-</div>
 
-        <div class="cell row-label">↓</div>
-        <div class="cell" style="background: #D84315; color: white;">│</div>
-        <div class="cell empty">-</div>
-        <div class="cell" style="background: #FF6F00; color: white;">│</div>
-        <div class="cell empty">-</div>
-        <div class="cell" style="background: #0D47A1; color: white;">│</div>
-        <div class="cell empty" style="grid-column: span 3;">-</div>
+        <div class="cell row-label">18-19</div>
+        <div class="cell empty" style="grid-column: span 10;">-</div>
 
         <div class="cell row-label">20</div>
-        <div class="cell pad" style="border: 3px solid orange;">FSR+<br/>↑</div>
-        <div class="cell pad" style="border: 3px solid yellow;">FSR-<br/>↑</div>
+        <div class="cell pad">FSR+</div>
+        <div class="cell pad">FSR-</div>
         <div class="cell empty">-</div>
         <div class="cell empty">-</div>
-        <div class="cell pad">DIN<br/>↑</div>
-        <div class="cell pad">GND<br/>↑</div>
-        <div class="cell pad">5V<br/>↑</div>
+        <div class="cell pad">DIN</div>
+        <div class="cell pad">GND</div>
+        <div class="cell pad">4V</div>
+        <div class="cell empty">-</div>
+        <div class="cell empty">-</div>
         <div class="cell empty">-</div>
     </div>
 
     <div class="power-flow" style="margin-top: 30px;">
-        <h3 style="color: #4CAF50;">Key Traces to Solder:</h3>
+        <h3 style="color: #4CAF50;">Traces Checklist:</h3>
         <div class="flow-item">
-            <strong style="color: #8B0000;">Red wires (5V):</strong>
+            <strong style="color: #8B0000;">Power (done ✓):</strong>
             <ul style="margin: 10px 0 0 20px;">
-                <li>Horizontal across Row 6 (A→H)</li>
-                <li>1H → 6H (battery + to 5V bus)</li>
-                <li>6A → 9A (5V bus to XIAO)</li>
-                <li>6G → 20G (5V bus to LED pad)</li>
+                <li>✓ Row 6 bus (A→J)</li>
+                <li>✓ F2 → J2 (battery+ to switch)</li>
+                <li>✓ J3 → 6J (switch to bus)</li>
             </ul>
         </div>
         <div class="flow-item">
-            <strong style="background: #666; padding: 2px 6px; border-radius: 3px;">Black wires (GND):</strong>
+            <strong style="background: #666; padding: 2px 6px; border-radius: 3px;">Ground (done ✓):</strong>
             <ul style="margin: 10px 0 0 20px;">
-                <li>Horizontal across Row 7 (A→H)</li>
-                <li>2H → 7H (battery - to GND bus)</li>
-                <li>7B → 9B (GND bus to XIAO)</li>
-                <li>7A → 17A (GND bus to 10K resistor)</li>
-                <li>7F → 20F (GND bus to LED GND pad)</li>
+                <li>✓ Row 7 bus (A→J)</li>
+                <li>✓ J7 = Battery - directly on bus</li>
             </ul>
         </div>
         <div class="flow-item">
-            <strong style="color: #FF6F00;">Orange wire (3V3 to FSR+):</strong>
+            <strong style="color: #8B0000;">Still needed - XIAO power:</strong>
             <ul style="margin: 10px 0 0 20px;">
-                <li><strong>9C → Column C → 20A</strong></li>
-                <li>Vertical trace in column C from row 9 to row 20</li>
-                <li>This powers the FSR sensor with 3.3V</li>
+                <li>6A → 9A (bus to XIAO power)</li>
+                <li>7B → 9B (bus to XIAO GND)</li>
             </ul>
         </div>
         <div class="flow-item">
-            <strong style="background: yellow; color: black; padding: 2px 6px; border-radius: 3px;">Yellow wire (FSR signal):</strong>
+            <strong style="color: #8B0000;">Still needed - LED:</strong>
             <ul style="margin: 10px 0 0 20px;">
-                <li><strong>20B → 16A</strong> (FSR- pad to junction)</li>
-                <li>This carries the FSR sensor signal</li>
-                <li>Junction 16A connects to:</li>
-                <ul style="margin: 5px 0 0 20px;">
-                    <li>15A (D0 reads voltage here)</li>
-                    <li>10K resistor leg (pulls down to GND)</li>
-                </ul>
+                <li>6G → 20G (bus to LED 4V)</li>
+                <li>7F → 20F (bus to LED GND)</li>
+                <li>15B → 20E (D1 to LED DIN)</li>
             </ul>
         </div>
         <div class="flow-item">
-            <strong style="color: #0D47A1;">Green wire (LED data):</strong>
+            <strong style="color: #FF6F00;">Still needed - FSR:</strong>
             <ul style="margin: 10px 0 0 20px;">
-                <li><strong>15B → 20E</strong> (D1 to LED DIN pad)</li>
-                <li>This sends LED control signals</li>
-            </ul>
-        </div>
-        <div class="flow-item">
-            <strong>Short trace (D0 to FSR junction):</strong>
-            <ul style="margin: 10px 0 0 20px;">
-                <li><strong>15A → 16A</strong> (just 1 row down)</li>
-                <li>Connects D0 pin to read the FSR voltage</li>
+                <li>9C → 20A (3V3 to FSR+)</li>
+                <li>20B → 16A (FSR- to junction)</li>
+                <li>16A → 15A (junction to D0) - may already connect via resistor</li>
+                <li>17A → 7A (resistor to GND)</li>
             </ul>
         </div>
     </div>
