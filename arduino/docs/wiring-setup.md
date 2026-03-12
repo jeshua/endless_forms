@@ -150,19 +150,17 @@ LED RING:
 
 ---
 
-## External Wire Pads (suggested)
+## External Wire Pads ✓ PLACED
 
-Place at bottom of board (rows 22-25):
+Row 20 pads:
 
-| Pad | Row,Col | Wire To | Color |
-|-----|---------|---------|-------|
-| FSR + | 22A | FSR leg 1 | Orange/Red |
-| FSR - | 22B | FSR leg 2 | Yellow |
-| LED 5V | 23A | LED ring VCC | Red |
-| LED GND | 23B | LED ring GND | Black |
-| LED DIN | 23C | LED ring data | Green |
-| BAT + | 24A | Battery + (via switch) | Red |
-| BAT - | 24B | Battery - | Black |
+| Pad | Position | Wire To | Color | Connects To |
+|-----|----------|---------|-------|-------------|
+| FSR + | **20A** | FSR leg 1 (power) | Orange/Red | From 9C (3V3) |
+| FSR - | **20B** | FSR leg 2 (signal) | Yellow | To 16A junction |
+| LED DIN | **20E** | LED ring data | Green | From 15B (D1) |
+| LED GND | **20F** | LED ring GND | Black | From GND bus |
+| LED 5V | **20G** | LED ring VCC | Red | From 5V bus |
 
 ---
 
@@ -173,9 +171,10 @@ Place at bottom of board (rows 22-25):
 - [x] D1 (LED) at 15B
 - [x] Power pins: 9A (5V), 9B (GND), 9C (3V3)
 - [x] Level shifter: SKIPPED (not needed)
-- [ ] 10K resistor (FSR pull-down): TBD
-- [ ] Power bus routing: TBD
-- [ ] External pads: TBD
+- [x] 10K resistor: Rows 16-17, Col A
+- [x] External pads at Row 20: A (FSR+), B (FSR-), E (LED DIN), F (LED GND), G (LED 5V)
+- [ ] Power buses: Row 6 (5V), Row 7 (GND) - TBD
+- [ ] Battery input pads: TBD
 
 ---
 
