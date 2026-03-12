@@ -466,7 +466,7 @@
         <div class="cell row-label">9</div>
         <div class="cell xiao-top">5V<br/>↑</div>
         <div class="cell xiao-top">GND<br/>↑</div>
-        <div class="cell xiao-top">3V3</div>
+        <div class="cell xiao-top" style="border: 3px solid orange;">3V3<br/>↓</div>
         <div class="cell xiao-top">-</div>
         <div class="cell xiao-top">-</div>
         <div class="cell xiao-top">-</div>
@@ -476,12 +476,14 @@
         <div class="cell row-label">↓</div>
         <div class="cell empty">-</div>
         <div class="cell empty">-</div>
-        <div class="cell" style="background: #1565C0; color: white;">│</div>
-        <div class="cell empty" style="grid-column: span 5;">XIAO chip body blocks this area</div>
+        <div class="cell" style="background: #FF6F00; color: white; font-weight: bold;">│<br/>3V3<br/>↓</div>
+        <div class="cell empty">-</div>
+        <div class="cell" style="background: #0D47A1; color: white;">│<br/>D1<br/>↓</div>
+        <div class="cell empty" style="grid-column: span 3;">XIAO chip body</div>
 
         <div class="cell row-label">15</div>
-        <div class="cell xiao-bottom">D0</div>
-        <div class="cell xiao-bottom">D1</div>
+        <div class="cell xiao-bottom">D0<br/>↓</div>
+        <div class="cell xiao-bottom">D1<br/>↓</div>
         <div class="cell xiao-bottom">-</div>
         <div class="cell xiao-bottom">-</div>
         <div class="cell xiao-bottom">-</div>
@@ -490,46 +492,48 @@
         <div class="cell empty">-</div>
 
         <div class="cell row-label">↓</div>
-        <div class="cell" style="background: #0D47A1; color: white;">│</div>
-        <div class="cell" style="background: #0D47A1; color: white;">│</div>
+        <div class="cell" style="background: #0D47A1; color: white;">│<br/>D0</div>
         <div class="cell empty">-</div>
+        <div class="cell" style="background: #FF6F00; color: white;">│<br/>3V3</div>
         <div class="cell empty">-</div>
-        <div class="cell empty">-</div>
-        <div class="cell empty">-</div>
-        <div class="cell empty">-</div>
-        <div class="cell empty">-</div>
+        <div class="cell" style="background: #0D47A1; color: white;">│<br/>D1</div>
+        <div class="cell empty" style="grid-column: span 3;">-</div>
 
         <div class="cell row-label">16</div>
-        <div class="cell resistor">FSR<br/>junct<br/>↓</div>
+        <div class="cell resistor" style="border: 3px solid yellow;">FSR<br/>JUNCT<br/>↓</div>
         <div class="cell empty">-</div>
+        <div class="cell" style="background: #FF6F00; color: white;">│</div>
         <div class="cell empty">-</div>
-        <div class="cell empty">-</div>
-        <div class="cell empty">-</div>
-        <div class="cell empty">-</div>
-        <div class="cell empty">-</div>
-        <div class="cell empty">-</div>
+        <div class="cell" style="background: #0D47A1; color: white;">│</div>
+        <div class="cell empty" style="grid-column: span 3;">-</div>
 
         <div class="cell row-label">↓</div>
         <div class="cell" style="background: #D84315; color: white;">│<br/>10K</div>
-        <div class="cell empty" style="grid-column: span 7;">resistor body</div>
+        <div class="cell" style="background: yellow; color: black; font-weight: bold;">←FSR-</div>
+        <div class="cell" style="background: #FF6F00; color: white;">│</div>
+        <div class="cell empty">-</div>
+        <div class="cell" style="background: #0D47A1; color: white;">│</div>
+        <div class="cell empty" style="grid-column: span 3;">-</div>
 
         <div class="cell row-label">17</div>
-        <div class="cell resistor">↓</div>
+        <div class="cell resistor">↓<br/>GND</div>
         <div class="cell empty">-</div>
+        <div class="cell" style="background: #FF6F00; color: white;">│</div>
         <div class="cell empty">-</div>
-        <div class="cell empty">-</div>
-        <div class="cell empty">-</div>
-        <div class="cell empty">-</div>
-        <div class="cell empty">-</div>
-        <div class="cell empty">-</div>
+        <div class="cell" style="background: #0D47A1; color: white;">│</div>
+        <div class="cell empty" style="grid-column: span 3;">-</div>
 
         <div class="cell row-label">↓</div>
         <div class="cell" style="background: #D84315; color: white;">│</div>
-        <div class="cell empty" style="grid-column: span 7;">trace to GND bus</div>
+        <div class="cell empty">-</div>
+        <div class="cell" style="background: #FF6F00; color: white;">│</div>
+        <div class="cell empty">-</div>
+        <div class="cell" style="background: #0D47A1; color: white;">│</div>
+        <div class="cell empty" style="grid-column: span 3;">-</div>
 
         <div class="cell row-label">20</div>
-        <div class="cell pad">FSR+<br/>↑</div>
-        <div class="cell pad">FSR-<br/>↑</div>
+        <div class="cell pad" style="border: 3px solid orange;">FSR+<br/>↑</div>
+        <div class="cell pad" style="border: 3px solid yellow;">FSR-<br/>↑</div>
         <div class="cell empty">-</div>
         <div class="cell empty">-</div>
         <div class="cell pad">DIN<br/>↑</div>
@@ -560,12 +564,37 @@
             </ul>
         </div>
         <div class="flow-item">
-            <strong style="color: #1565C0;">Signal wires:</strong>
+            <strong style="color: #FF6F00;">Orange wire (3V3 to FSR+):</strong>
             <ul style="margin: 10px 0 0 20px;">
-                <li>9C → 20A (3V3 to FSR+) - <em>orange wire</em></li>
-                <li>15A → 16A (D0 to FSR junction) - <em>very short, 1 row</em></li>
-                <li>20B → 16A (FSR- pad to junction) - <em>yellow wire</em></li>
-                <li>15B → 20E (D1 to LED DIN) - <em>green wire</em></li>
+                <li><strong>9C → Column C → 20A</strong></li>
+                <li>Vertical trace in column C from row 9 to row 20</li>
+                <li>This powers the FSR sensor with 3.3V</li>
+            </ul>
+        </div>
+        <div class="flow-item">
+            <strong style="background: yellow; color: black; padding: 2px 6px; border-radius: 3px;">Yellow wire (FSR signal):</strong>
+            <ul style="margin: 10px 0 0 20px;">
+                <li><strong>20B → 16A</strong> (FSR- pad to junction)</li>
+                <li>This carries the FSR sensor signal</li>
+                <li>Junction 16A connects to:</li>
+                <ul style="margin: 5px 0 0 20px;">
+                    <li>15A (D0 reads voltage here)</li>
+                    <li>10K resistor leg (pulls down to GND)</li>
+                </ul>
+            </ul>
+        </div>
+        <div class="flow-item">
+            <strong style="color: #0D47A1;">Green wire (LED data):</strong>
+            <ul style="margin: 10px 0 0 20px;">
+                <li><strong>15B → 20E</strong> (D1 to LED DIN pad)</li>
+                <li>This sends LED control signals</li>
+            </ul>
+        </div>
+        <div class="flow-item">
+            <strong>Short trace (D0 to FSR junction):</strong>
+            <ul style="margin: 10px 0 0 20px;">
+                <li><strong>15A → 16A</strong> (just 1 row down)</li>
+                <li>Connects D0 pin to read the FSR voltage</li>
             </ul>
         </div>
     </div>
